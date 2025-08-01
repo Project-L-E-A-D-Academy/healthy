@@ -18,7 +18,6 @@
             min-height: 100vh;
         }
 
-        /* Loading Screen */
         .loading-screen {
             position: fixed;
             top: 0;
@@ -72,7 +71,6 @@
             }
         }
 
-        /* Header */
         .header {
             background: rgba(255, 255, 255, 0.15);
             backdrop-filter: blur(10px);
@@ -107,7 +105,6 @@
             transform: translateY(-2px);
         }
 
-        /* Main Content */
         .main-content {
             opacity: 0;
             transition: opacity 0.5s ease-in;
@@ -414,13 +411,11 @@
     </style>
 </head>
 <body>
-    <!-- Loading Screen -->
     <div class="loading-screen" id="loadingScreen">
         <div class="loading-logo">LEAD</div>
         <div class="loading-motto">Learn. Empower. Achieve. Dream.</div>
     </div>
 
-    <!-- Header -->
     <div class="header">
         <div class="logo">LEAD - Nutrition</div>
         <div class="nav-buttons">
@@ -429,7 +424,6 @@
         </div>
     </div>
 
-    <!-- Main Content -->
     <div class="main-content" id="mainContent">
         <div class="dashboard">
             <div class="welcome-section">
@@ -437,7 +431,6 @@
                 <p class="welcome-subtitle">Fuel your body, nourish your goals</p>
             </div>
 
-            <!-- Stats Overview -->
             <div class="stats-overview">
                 <div class="stat-box">
                     <div class="stat-number" id="totalMeals">0</div>
@@ -458,7 +451,6 @@
             </div>
 
             <div class="nutrition-grid">
-                <!-- Dietary Preferences -->
                 <div class="nutrition-card">
                     <div class="card-title">
                         🥗 Dietary Preferences
@@ -472,11 +464,10 @@
                         <div class="diet-option" data-diet="Paleo">Paleo</div>
                     </div>
                     <p style="color: #6b7280; font-size: 14px; margin-top: 10px;">
-                        Select your dietary preference to get personalized meal suggestions and ensure your food choices align with your lifestyle.
+                        Select your dietary preference to get personalized meal suggestions.
                     </p>
                 </div>
 
-                <!-- Meal Logging -->
                 <div class="nutrition-card">
                     <div class="card-title">
                         📝 Log Your Meals
@@ -510,7 +501,6 @@
                     </form>
                 </div>
 
-                <!-- Recent Meals -->
                 <div class="nutrition-card">
                     <div class="card-title">
                         🍽️ Recent Meals
@@ -522,13 +512,12 @@
                     </div>
                 </div>
 
-                <!-- AI Food Coach -->
                 <div class="nutrition-card ai-coach-section">
                     <div class="card-title">
                         🤖 AI Food Coach
                     </div>
                     <p style="color: #6b7280; margin-bottom: 20px;">
-                        Get personalized nutrition advice, meal suggestions, and answers to your food-related questions from our AI nutritionist.
+                        Get personalized nutrition advice from our AI nutritionist.
                     </p>
                     
                     <div class="chat-container" id="coachChatContainer">
@@ -546,7 +535,6 @@
         </div>
     </div>
 
-    <!-- API Status Indicator -->
     <div class="api-status disconnected" id="apiStatus">
         AI Service: Disconnected
     </div>
@@ -558,16 +546,15 @@
         
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         
-        // IMPORTANT: In a production environment, you should NEVER expose API keys in client-side code
-        // This should be handled through a backend service. This is for demonstration only.
-        const OPENAI_API_KEY = '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';
-        const OPENAI_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
+        // OpenRouter configuration
+        const OPENROUTER_API_KEY = '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';
+        const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
+        const MODEL_NAME = 'deepseek/deepseek-chat-v3-0324';
         
         let currentUser = null;
         let currentDietPreference = 'All';
         let apiConnected = false;
 
-        // Check authentication and load user data
         async function checkAuth() {
             const { data: { user } } = await supabase.auth.getUser();
             
@@ -580,27 +567,23 @@
             await loadUserProfile();
             await loadMeals();
             await loadStats();
-            
-            // Verify API connection after auth
             await verifyApiConnection();
         }
 
-        // Verify API connection
         async function verifyApiConnection() {
             const statusElement = document.getElementById('apiStatus');
             
             try {
-                // Simple test request to verify API key
-                const response = await fetch(OPENAI_API_URL, {
+                const response = await fetch(OPENROUTER_API_URL, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${OPENAI_API_KEY}`,
+                        'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
                         'HTTP-Referer': window.location.href,
                         'X-Title': 'LEAD Wellness App'
                     },
                     body: JSON.stringify({
-                        model: 'meta-llama/llama-3.1-8b-instruct:free',
+                        model: MODEL_NAME,
                         messages: [{ role: 'user', content: 'Hello' }],
                         max_tokens: 5
                     })
@@ -616,20 +599,15 @@
                     statusElement.textContent = 'AI Service: Disconnected (Check API Key)';
                     statusElement.classList.remove('connected');
                     statusElement.classList.add('disconnected');
-                    
-                    const errorData = await response.json();
-                    console.error('API Connection Error:', errorData);
                 }
             } catch (error) {
                 apiConnected = false;
                 statusElement.textContent = 'AI Service: Connection Failed';
                 statusElement.classList.remove('connected');
                 statusElement.classList.add('disconnected');
-                console.error('API Connection Error:', error);
             }
         }
 
-        // Load user profile and dietary preference
         async function loadUserProfile() {
             const { data: profile } = await supabase
                 .from('user_profiles')
@@ -641,7 +619,6 @@
                 currentDietPreference = profile.dietary_preference;
                 document.getElementById('currentDiet').textContent = currentDietPreference;
                 
-                // Update active diet option
                 document.querySelectorAll('.diet-option').forEach(option => {
                     option.classList.remove('active');
                     if (option.dataset.diet === currentDietPreference) {
@@ -651,7 +628,6 @@
             }
         }
 
-        // Load user meals
         async function loadMeals() {
             const { data: meals } = await supabase
                 .from('nutrition_logs')
@@ -685,7 +661,6 @@
             `).join('');
         }
 
-        // Load nutrition stats
         async function loadStats() {
             const { data: meals } = await supabase
                 .from('nutrition_logs')
@@ -699,15 +674,13 @@
                 const avgCalories = Math.round(totalCalories / meals.length);
                 document.getElementById('avgCalories').textContent = avgCalories;
                 
-                // Calculate streak (simplified - count consecutive days with meals)
                 const uniqueDays = [...new Set(meals.map(meal => 
                     new Date(meal.logged_at).toDateString()
-                )].length;
+                ))].length;
                 document.getElementById('streakDays').textContent = uniqueDays;
             }
         }
 
-        // Show loading screen and then main content
         function showContent() {
             setTimeout(() => {
                 document.getElementById('loadingScreen').classList.add('hidden');
@@ -715,7 +688,6 @@
             }, 2000);
         }
 
-        // Navigation functions
         function goHome() {
             window.location.href = 'menu.html';
         }
@@ -727,7 +699,6 @@
             }
         }
 
-        // Dietary preference selection
         document.addEventListener('click', async (e) => {
             if (e.target.classList.contains('diet-option')) {
                 document.querySelectorAll('.diet-option').forEach(option => {
@@ -738,7 +709,6 @@
                 currentDietPreference = e.target.dataset.diet;
                 document.getElementById('currentDiet').textContent = currentDietPreference;
                 
-                // Update user profile
                 await supabase
                     .from('user_profiles')
                     .update({ dietary_preference: currentDietPreference })
@@ -746,7 +716,6 @@
             }
         });
 
-        // Meal form submission
         document.getElementById('mealForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
@@ -768,10 +737,7 @@
                 
                 if (error) throw error;
                 
-                // Reset form
                 document.getElementById('mealForm').reset();
-                
-                // Reload meals and stats
                 await loadMeals();
                 await loadStats();
                 
@@ -782,7 +748,6 @@
             }
         });
 
-        // Delete meal
         async function deleteMeal(mealId) {
             if (!confirm('Are you sure you want to delete this meal?')) return;
             
@@ -803,7 +768,6 @@
             }
         }
 
-        // AI Food Coach Functions
         async function sendCoachMessage() {
             if (!apiConnected) {
                 alert('AI service is currently unavailable. Please check your API key or try again later.');
@@ -817,7 +781,6 @@
             
             const chatContainer = document.getElementById('coachChatContainer');
             
-            // Add user message
             const userMessage = document.createElement('div');
             userMessage.className = 'chat-message user';
             userMessage.innerHTML = `<p>${message}</p>`;
@@ -826,7 +789,6 @@
             input.value = '';
             chatContainer.scrollTop = chatContainer.scrollHeight;
             
-            // Add loading message
             const loadingMessage = document.createElement('div');
             loadingMessage.className = 'chat-message ai';
             loadingMessage.innerHTML = `<p>Thinking...</p>`;
@@ -835,7 +797,6 @@
             chatContainer.scrollTop = chatContainer.scrollHeight;
             
             try {
-                // Get user's recent meals for context
                 const { data: recentMeals } = await supabase
                     .from('nutrition_logs')
                     .select('meal_name, calories, meal_type, logged_at')
@@ -847,16 +808,16 @@
                     ? `Recent meals: ${recentMeals.map(m => `${m.meal_name} (${m.meal_type}, ${m.calories || 'unknown'} calories)`).join(', ')}`
                     : 'No recent meals logged';
                 
-                const response = await fetch(OPENAI_API_URL, {
+                const response = await fetch(OPENROUTER_API_URL, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${OPENAI_API_KEY}`,
+                        'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
                         'HTTP-Referer': window.location.href,
                         'X-Title': 'LEAD Wellness App'
                     },
                     body: JSON.stringify({
-                        model: 'meta-llama/llama-3.1-8b-instruct:free',
+                        model: MODEL_NAME,
                         messages: [{
                             role: 'system',
                             content: `You are a friendly AI Food Coach for teenagers. Provide helpful, science-based nutrition advice that's age-appropriate and encouraging. Focus on balanced eating, healthy habits, and positive relationships with food. Current user diet preference: ${currentDietPreference}. ${mealContext}. Keep responses conversational and supportive.`
@@ -864,14 +825,13 @@
                             role: 'user',
                             content: message
                         }],
-                        max_tokens: 300,
+                        max_tokens: 1000,
                         temperature: 0.7
                     })
                 });
                 
                 const data = await response.json();
                 
-                // Remove loading message
                 const loading = document.getElementById('loadingMessage');
                 if (loading) loading.remove();
                 
@@ -886,8 +846,6 @@
                         document.getElementById('apiStatus').textContent = 'AI Service: Invalid API Key';
                     } else if (response.status === 429) {
                         errorMsg += 'Too many requests. Please wait a moment and try again.';
-                    } else if (response.status === 400) {
-                        errorMsg += 'There was an issue with the request format.';
                     } else {
                         errorMsg += `Error code: ${response.status}. Please try again later.`;
                     }
@@ -913,7 +871,6 @@
                 
                 const aiResponse = data.choices[0].message.content;
                 
-                // Add AI response
                 const aiMessage = document.createElement('div');
                 aiMessage.className = 'chat-message ai';
                 aiMessage.innerHTML = `<p>${aiResponse}</p>`;
@@ -924,7 +881,6 @@
             } catch (error) {
                 console.error('Error sending coach message:', error);
                 
-                // Remove loading message if it exists
                 const loading = document.getElementById('loadingMessage');
                 if (loading) loading.remove();
                 
@@ -950,7 +906,6 @@
             }
         }
 
-        // Initialize page
         window.addEventListener('load', async () => {
             await checkAuth();
             showContent();
