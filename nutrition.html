@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LEAD - Nutrition</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            min-height: 100vh;
+        }
+
+        /* Loading Screen */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            transition: opacity 0.5s ease-out;
+        }
+
+        .loading-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .loading-logo {
+            font-size: 80px;
+            font-weight: bold;
+            color: #dc2626;
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.3);
+            animation: pulse 2s ease-in-out infinite;
+            margin-bottom: 20px;
+        }
+
+        .loading-motto {
+            color: white;
+            font-size: 18px;
+            text-align: center;
+            opacity: 0.9;
+            animation: fadeInUp 1s ease-out 0.5s both;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 0.9;
+                transform: translateY(0);
+            }
+        }
+
+        /* Header */
+        .header {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: white;
+        }
+
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            color: #dc2626;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .nav-buttons button {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin-left: 10px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .nav-buttons button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        /* Main Content */
+        .main-content {
+            opacity: 0;
+            transition: opacity 0.5s ease-in;
+            padding: 40px 20px;
+        }
+
+        .main-content.visible {
+            opacity: 1;
+        }
+
+        .dashboard {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .welcome-section {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        .welcome-title {
+            font-size: 36px;
+            margin-bottom: 10px;
+        }
+
+        .welcome-subtitle {
+            font-size: 18px;
+            opacity: 0.9;
+        }
+
+        .nutrition-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .nutrition-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #1f2937;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .dietary-preferences {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .diet-option {
+            padding: 10px;
+            background: #f3f4f6;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .diet-option.active {
+            background: #10b981;
+            color: white;
+            border-color: #059669;
+        }
+
+        .diet-option:hover {
+            border-color: #10b981;
+        }
+
+        .meal-form {
+            display: grid;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 10px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #374151;
+            font-weight: 600;
+        }
+
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #10b981;
+        }
+
+        .btn {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .btn:hover {
+            background: #059669;
+        }
+
+        .btn-secondary {
+            background: #6b7280;
+        }
+
+        .btn-secondary:hover {
+            background: #4b5563;
+        }
+
+        .meal-logs {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .meal-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: #f9fafb;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .meal-info h4 {
+            color: #1f2937;
+            margin-bottom: 5px;
+        }
+
+        .meal-info p {
+            color: #6b7280;
+            font-size: 14px;
+        }
+
+        .meal-actions button {
+            background: #dc2626;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .ai-coach-section {
+            grid-column: 1 / -1;
+        }
+
+        .chat-container {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            background: #f9fafb;
+        }
+
+        .chat-message {
+            margin-bottom: 15px;
+            padding: 10px 15px;
+            border-radius: 15px;
+            max-width: 80%;
+        }
+
+        .chat-message.user {
+            background: #10b981;
+            color: white;
+            margin-left: auto;
+            text-align: right;
+        }
+
+        .chat-message.ai {
+            background: white;
+            color: #1f2937;
+            border: 1px solid #e5e7eb;
+        }
+
+        .chat-input-container {
+            display: flex;
+            gap: 10px;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 25px;
+            font-size: 16px;
+            outline: none;
+        }
+
+        .chat-input:focus {
+            border-color: #10b981;
+        }
+
+        .chat-send {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .stats-overview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-box {
+            background: #f0fdf4;
+            border: 2px solid #bbf7d0;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: #059669;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: #374151;
+            font-size: 12px;
+        }
+
+        @media (max-width: 768px) {
+            .nutrition-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .dietary-preferences {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div class="loading-screen" id="loadingScreen">
+        <div class="loading-logo">LEAD</div>
+        <div class="loading-motto">Learn. Empower. Achieve. Dream.</div>
+    </div>
+
+    <!-- Header -->
+    <div class="header">
+        <div class="logo">LEAD - Nutrition</div>
+        <div class="nav-buttons">
+            <button onclick="goHome()">Home</button>
+            <button onclick="logout()">Logout</button>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content" id="mainContent">
+        <div class="dashboard">
+            <div class="welcome-section">
+                <h1 class="welcome-title">Nutrition Center</h1>
+                <p class="welcome-subtitle">Fuel your body, nourish your goals</p>
+            </div>
+
+            <!-- Stats Overview -->
+            <div class="stats-overview">
+                <div class="stat-box">
+                    <div class="stat-number" id="totalMeals">0</div>
+                    <div class="stat-label">Meals Logged</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-number" id="avgCalories">0</div>
+                    <div class="stat-label">Avg Daily Calories</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-number" id="streakDays">0</div>
+                    <div class="stat-label">Logging Streak</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-number" id="currentDiet">All</div>
+                    <div class="stat-label">Current Diet</div>
+                </div>
+            </div>
+
+            <div class="nutrition-grid">
+                <!-- Dietary Preferences -->
+                <div class="nutrition-card">
+                    <div class="card-title">
+                        🥗 Dietary Preferences
+                    </div>
+                    <div class="dietary-preferences">
+                        <div class="diet-option active" data-diet="All">All Foods</div>
+                        <div class="diet-option" data-diet="Vegetarian">Vegetarian</div>
+                        <div class="diet-option" data-diet="Vegan">Vegan</div>
+                        <div class="diet-option" data-diet="Gluten-Free">Gluten-Free</div>
+                        <div class="diet-option" data-diet="Keto">Keto</div>
+                        <div class="diet-option" data-diet="Paleo">Paleo</div>
+                    </div>
+                    <p style="color: #6b7280; font-size: 14px; margin-top: 10px;">
+                        Select your dietary preference to get personalized meal suggestions and ensure your food choices align with your lifestyle.
+                    </p>
+                </div>
+
+                <!-- Meal Logging -->
+                <div class="nutrition-card">
+                    <div class="card-title">
+                        📝 Log Your Meals
+                    </div>
+                    <form class="meal-form" id="mealForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="mealName">Meal Name</label>
+                                <input type="text" id="mealName" placeholder="e.g., Grilled Chicken Salad" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="calories">Calories</label>
+                                <input type="number" id="calories" placeholder="350">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="mealType">Meal Type</label>
+                            <select id="mealType" required>
+                                <option value="">Select meal type</option>
+                                <option value="breakfast">Breakfast</option>
+                                <option value="lunch">Lunch</option>
+                                <option value="dinner">Dinner</option>
+                                <option value="snack">Snack</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="notes">Notes (optional)</label>
+                            <textarea id="notes" rows="2" placeholder="How did it taste? How did you feel?"></textarea>
+                        </div>
+                        <button type="submit" class="btn">Log Meal</button>
+                    </form>
+                </div>
+
+                <!-- Recent Meals -->
+                <div class="nutrition-card">
+                    <div class="card-title">
+                        🍽️ Recent Meals
+                    </div>
+                    <div class="meal-logs" id="mealLogs">
+                        <p style="color: #6b7280; text-align: center; padding: 20px;">
+                            No meals logged yet. Start by adding your first meal above!
+                        </p>
+                    </div>
+                </div>
+
+                <!-- AI Food Coach -->
+                <div class="nutrition-card ai-coach-section">
+                    <div class="card-title">
+                        🤖 AI Food Coach
+                    </div>
+                    <p style="color: #6b7280; margin-bottom: 20px;">
+                        Get personalized nutrition advice, meal suggestions, and answers to your food-related questions from our AI nutritionist.
+                    </p>
+                    
+                    <div class="chat-container" id="coachChatContainer">
+                        <div class="chat-message ai">
+                            <p>Hi! I'm your AI Food Coach! 🥗 I'm here to help you make healthy food choices, plan balanced meals, and answer any nutrition questions you have. What would you like to know about nutrition today?</p>
+                        </div>
+                    </div>
+                    
+                    <div class="chat-input-container">
+                        <input type="text" class="chat-input" id="coachChatInput" placeholder="Ask about nutrition, meal ideas, or food facts..." onkeypress="handleCoachChatKeyPress(event)">
+                        <button class="chat-send" onclick="sendCoachMessage()">Send</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Supabase configuration
+        const SUPABASE_URL = 'https://fhthwxgkxuontprzclhb.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZodGh3eGdreHVvbnRwcnpjbGhiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQwNDczNDgsImV4cCI6MjA2OTYyMzM0OH0.9mEHL1jpYXkMeWg0UNKK5LYPosj0eou4k-mw3eof-ZU';
+        
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        const OPENAI_API_KEY = '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';
+        const OPENAI_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
+        
+        let currentUser = null;
+        let currentDietPreference = 'All';
+
+        // Check authentication and load user data
+        async function checkAuth() {
+            const { data: { user } } = await supabase.auth.getUser();
+            
+            if (!user) {
+                window.location.href = 'index.html';
+                return;
+            }
+            
+            currentUser = user;
+            await loadUserProfile();
+            await loadMeals();
+            await loadStats();
+        }
+
+        // Load user profile and dietary preference
+        async function loadUserProfile() {
+            const { data: profile } = await supabase
+                .from('user_profiles')
+                .select('dietary_preference')
+                .eq('id', currentUser.id)
+                .single();
+            
+            if (profile && profile.dietary_preference) {
+                currentDietPreference = profile.dietary_preference;
+                document.getElementById('currentDiet').textContent = currentDietPreference;
+                
+                // Update active diet option
+                document.querySelectorAll('.diet-option').forEach(option => {
+                    option.classList.remove('active');
+                    if (option.dataset.diet === currentDietPreference) {
+                        option.classList.add('active');
+                    }
+                });
+            }
+        }
+
+        // Load user meals
+        async function loadMeals() {
+            const { data: meals } = await supabase
+                .from('nutrition_logs')
+                .select('*')
+                .eq('user_id', currentUser.id)
+                .order('logged_at', { ascending: false })
+                .limit(10);
+            
+            const mealLogs = document.getElementById('mealLogs');
+            
+            if (!meals || meals.length === 0) {
+                mealLogs.innerHTML = `
+                    <p style="color: #6b7280; text-align: center; padding: 20px;">
+                        No meals logged yet. Start by adding your first meal above!
+                    </p>
+                `;
+                return;
+            }
+            
+            mealLogs.innerHTML = meals.map(meal => `
+                <div class="meal-item">
+                    <div class="meal-info">
+                        <h4>${meal.meal_name}</h4>
+                        <p>${meal.meal_type} • ${meal.calories || 'No'} calories • ${new Date(meal.logged_at).toLocaleDateString()}</p>
+                        ${meal.notes ? `<p style="font-style: italic; margin-top: 5px;">"${meal.notes}"</p>` : ''}
+                    </div>
+                    <div class="meal-actions">
+                        <button onclick="deleteMeal('${meal.id}')">Delete</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Load nutrition stats
+        async function loadStats() {
+            const { data: meals } = await supabase
+                .from('nutrition_logs')
+                .select('*')
+                .eq('user_id', currentUser.id);
+            
+            if (meals && meals.length > 0) {
+                document.getElementById('totalMeals').textContent = meals.length;
+                
+                const totalCalories = meals.reduce((sum, meal) => sum + (meal.calories || 0), 0);
+                const avgCalories = Math.round(totalCalories / meals.length);
+                document.getElementById('avgCalories').textContent = avgCalories;
+                
+                // Calculate streak (simplified - count consecutive days with meals)
+                const uniqueDays = [...new Set(meals.map(meal => 
+                    new Date(meal.logged_at).toDateString()
+                ))].length;
+                document.getElementById('streakDays').textContent = uniqueDays;
+            }
+        }
+
+        // Show loading screen and then main content
+        function showContent() {
+            setTimeout(() => {
+                document.getElementById('loadingScreen').classList.add('hidden');
+                document.getElementById('mainContent').classList.add('visible');
+            }, 2000);
+        }
+
+        // Navigation functions
+        function goHome() {
+            window.location.href = 'menu.html';
+        }
+
+        async function logout() {
+            const { error } = await supabase.auth.signOut();
+            if (!error) {
+                window.location.href = 'index.html';
+            }
+        }
+
+        // Dietary preference selection
+        document.addEventListener('click', async (e) => {
+            if (e.target.classList.contains('diet-option')) {
+                document.querySelectorAll('.diet-option').forEach(option => {
+                    option.classList.remove('active');
+                });
+                e.target.classList.add('active');
+                
+                currentDietPreference = e.target.dataset.diet;
+                document.getElementById('currentDiet').textContent = currentDietPreference;
+                
+                // Update user profile
+                await supabase
+                    .from('user_profiles')
+                    .update({ dietary_preference: currentDietPreference })
+                    .eq('id', currentUser.id);
+            }
+        });
+
+        // Meal form submission
+        document.getElementById('mealForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const mealName = document.getElementById('mealName').value;
+            const calories = parseInt(document.getElementById('calories').value) || null;
+            const mealType = document.getElementById('mealType').value;
+            const notes = document.getElementById('notes').value;
+            
+            try {
+                const { error } = await supabase
+                    .from('nutrition_logs')
+                    .insert([{
+                        user_id: currentUser.id,
+                        meal_name: mealName,
+                        calories: calories,
+                        meal_type: mealType,
+                        notes: notes
+                    }]);
+                
+                if (error) throw error;
+                
+                // Reset form
+                document.getElementById('mealForm').reset();
+                
+                // Reload meals and stats
+                await loadMeals();
+                await loadStats();
+                
+                alert('Meal logged successfully!');
+            } catch (error) {
+                console.error('Error logging meal:', error);
+                alert('Error logging meal. Please try again.');
+            }
+        });
+
+        // Delete meal
+        async function deleteMeal(mealId) {
+            if (!confirm('Are you sure you want to delete this meal?')) return;
+            
+            try {
+                const { error } = await supabase
+                    .from('nutrition_logs')
+                    .delete()
+                    .eq('id', mealId)
+                    .eq('user_id', currentUser.id);
+                
+                if (error) throw error;
+                
+                await loadMeals();
+                await loadStats();
+            } catch (error) {
+                console.error('Error deleting meal:', error);
+                alert('Error deleting meal. Please try again.');
+            }
+        }
+
+        // AI Food Coach Functions
+        async function sendCoachMessage() {
+            const input = document.getElementById('coachChatInput');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            const chatContainer = document.getElementById('coachChatContainer');
+            
+            // Add user message
+            const userMessage = document.createElement('div');
+            userMessage.className = 'chat-message user';
+            userMessage.innerHTML = `<p>${message}</p>`;
+            chatContainer.appendChild(userMessage);
+            
+            input.value = '';
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+            
+            try {
+                // Get user's recent meals for context
+                const { data: recentMeals } = await supabase
+                    .from('nutrition_logs')
+                    .select('meal_name, calories, meal_type, logged_at')
+                    .eq('user_id', currentUser.id)
+                    .order('logged_at', { ascending: false })
+                    .limit(5);
+                
+                const mealContext = recentMeals && recentMeals.length > 0 
+                    ? `Recent meals: ${recentMeals.map(m => `${m.meal_name} (${m.meal_type}, ${m.calories || 'unknown'} calories)`).join(', ')}`
+                    : 'No recent meals logged';
+                
+                const response = await fetch(OPENAI_API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${OPENAI_API_KEY}`,
+                        'HTTP-Referer': 'https://lead-wellness-app.com',
+                        'X-Title': 'LEAD Wellness App'
+                    },
+                    body: JSON.stringify({
+                        model: 'deepseek/deepseek-v3',
+                        messages: [{
+                            role: 'system',
+                            content: `You are a friendly AI Food Coach for teenagers. Provide helpful, science-based nutrition advice that's age-appropriate and encouraging. Focus on balanced eating, healthy habits, and positive relationships with food. Current user diet preference: ${currentDietPreference}. ${mealContext}. Keep responses conversational and supportive.`
+                        }, {
+                            role: 'user',
+                            content: message
+                        }],
+                        max_tokens: 300,
+                        temperature: 0.7
+                    })
+                });
+                
+                const data = await response.json();
+                const aiResponse = data.choices[0].message.content;
+                
+                // Add AI response
+                const aiMessage = document.createElement('div');
+                aiMessage.className = 'chat-message ai';
+                aiMessage.innerHTML = `<p>${aiResponse}</p>`;
+                chatContainer.appendChild(aiMessage);
+                
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            } catch (error) {
+                console.error('Error sending coach message:', error);
+                const errorMessage = document.createElement('div');
+                errorMessage.className = 'chat-message ai';
+                errorMessage.innerHTML = `<p>I'm sorry, I'm having trouble responding right now. Please try again in a moment.</p>`;
+                chatContainer.appendChild(errorMessage);
+            }
+        }
+
+        function handleCoachChatKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendCoachMessage();
+            }
+        }
+
+        // Initialize page
+        window.addEventListener('load', async () => {
+            await checkAuth();
+            showContent();
+        });
+    </script>
+</body>
+</html>
