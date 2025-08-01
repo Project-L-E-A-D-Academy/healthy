@@ -367,12 +367,12 @@
             font-weight: 600;
         }
 
-        .meditation-list {
+        .meditation-list, .book-list, .sound-grid, .color-noise-grid {
             display: grid;
             gap: 15px;
         }
 
-        .meditation-item {
+        .meditation-item, .book-item, .sound-item, .color-noise-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -380,19 +380,29 @@
             background: #f9fafb;
             border-radius: 10px;
             border: 1px solid #e5e7eb;
+            cursor: pointer;
+            transition: all 0.3s;
         }
 
-        .meditation-info h4 {
+        .meditation-item:hover, .book-item:hover, .sound-item:hover, .color-noise-item:hover {
+            background: #f3f4f6;
+        }
+
+        .meditation-info, .book-info, .sound-info, .color-noise-info {
+            flex: 1;
+        }
+
+        .meditation-info h4, .book-info h4, .sound-info h4, .color-noise-info h4 {
             color: #1f2937;
             margin-bottom: 5px;
         }
 
-        .meditation-info p {
+        .meditation-info p, .book-info p, .sound-info p, .color-noise-info p {
             color: #6b7280;
             font-size: 14px;
         }
 
-        .meditation-play {
+        .meditation-play, .book-play, .sound-play, .color-noise-play {
             background: #8b5cf6;
             color: white;
             border: none;
@@ -403,9 +413,57 @@
             font-weight: 600;
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+        .sound-icon, .color-noise-icon {
+            font-size: 24px;
+            margin-right: 15px;
+        }
+
+        .color-noise-button {
+            width: 100%;
+            background: #6366f1;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 10px;
+            margin-top: 20px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .color-noise-button:hover {
+            background: #4f46e5;
+        }
+
+        .custom-breathing-form {
+            margin-top: 20px;
+        }
+
+        .custom-breathing-form label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .custom-breathing-form input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #e5e7eb;
+            border-radius: 5px;
+        }
+
+        .custom-breathing-form button {
+            background: #8b5cf6;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 5px;
+            width: 100%;
+            font-weight: 600;
+            cursor: pointer;
         }
 
         .xp-progress {
@@ -424,6 +482,14 @@
             transition: width 0.3s ease;
         }
 
+        .timer-display {
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            margin: 20px 0;
+            color: #1f2937;
+        }
+
         @media (max-width: 768px) {
             .activities-grid {
                 grid-template-columns: 1fr;
@@ -438,6 +504,11 @@
                 width: 150px;
                 height: 150px;
             }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
     </style>
 </head>
@@ -468,10 +539,6 @@
             <!-- Stats Grid -->
             <div class="stats-grid">
                 <div class="stat-card">
-                    <div class="stat-value" id="breathingStreak">0</div>
-                    <div class="stat-label">Breathing Streak</div>
-                </div>
-                <div class="stat-card">
                     <div class="stat-value" id="breathingLevel">1</div>
                     <div class="stat-label">Breathing Level</div>
                     <div class="xp-progress">
@@ -486,6 +553,10 @@
                     <div class="stat-value" id="totalMinutes">0</div>
                     <div class="stat-label">Minutes Practiced</div>
                 </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="totalXp">0</div>
+                    <div class="stat-label">Total XP Earned</div>
+                </div>
             </div>
 
             <!-- Activities Grid -->
@@ -496,7 +567,7 @@
                     <div class="activity-description">
                         Talk about your feelings and problems with our compassionate AI therapist, available 24/7.
                     </div>
-                    <button class="activity-button">Start Session</button>
+                    <button class="activity-button">Talk Therapy</button>
                 </div>
 
                 <div class="activity-card" onclick="openBreathingExercise()">
@@ -508,22 +579,22 @@
                     <button class="activity-button">Start Breathing</button>
                 </div>
 
-                <div class="activity-card" onclick="openMeditationLibrary()">
-                    <div class="activity-icon">🧘</div>
-                    <div class="activity-title">Meditation Sessions</div>
+                <div class="activity-card" onclick="openBookMeditation()">
+                    <div class="activity-icon">📚</div>
+                    <div class="activity-title">Book Meditation</div>
                     <div class="activity-description">
-                        Guided meditation sessions for different goals: focus, calm, confidence, and more.
+                        Learn while you relax - listen to transformative books in 15-min daily sessions.
                     </div>
-                    <button class="activity-button">Browse Sessions</button>
+                    <button class="activity-button">Browse Books</button>
                 </div>
 
-                <div class="activity-card" onclick="openSleepStories()">
-                    <div class="activity-icon">🌙</div>
-                    <div class="activity-title">Sleep Stories</div>
+                <div class="activity-card" onclick="openFocusMode()">
+                    <div class="activity-icon">🎯</div>
+                    <div class="activity-title">Focus Mode</div>
                     <div class="activity-description">
-                        Calming bedtime stories designed to help you relax and fall asleep peacefully.
+                        Ambient sounds to boost concentration - rain, ocean, fireplace and color noises.
                     </div>
-                    <button class="activity-button">Listen Now</button>
+                    <button class="activity-button">Start Focusing</button>
                 </div>
             </div>
         </div>
@@ -565,6 +636,7 @@
                     <button onclick="startBreathingExercise('box')">Box Breathing (4-4-4-4)</button>
                     <button onclick="startBreathingExercise('deep')">Deep Breathing (4-6)</button>
                     <button onclick="startBreathingExercise('calm')">Calming Breath (4-7-8)</button>
+                    <button onclick="openCustomBreathing()" id="customBreathingBtn">Custom Breathing</button>
                     <button onclick="stopBreathingExercise()" id="stopBreathingBtn" style="display: none; background: #dc2626;">Stop</button>
                 </div>
                 
@@ -580,93 +652,199 @@
         </div>
     </div>
 
-    <!-- Meditation Library Modal -->
-    <div id="meditationModal" class="modal">
+    <!-- Custom Breathing Modal -->
+    <div id="customBreathingModal" class="modal">
         <div class="modal-content">
-            <span class="close" onclick="closeModal('meditationModal')">&times;</span>
-            <h2>Meditation Library</h2>
-            
-            <div class="meditation-list">
-                <div class="meditation-item">
-                    <div class="meditation-info">
-                        <h4>Morning Focus</h4>
-                        <p>5 minutes • Start your day with clarity and intention</p>
-                    </div>
-                    <button class="meditation-play" onclick="playMeditation('Morning Focus', 300)">Play</button>
-                </div>
+            <span class="close" onclick="closeModal('customBreathingModal')">&times;</span>
+            <div class="breathing-exercise">
+                <h2>Custom Breathing Exercise</h2>
+                <p id="customBreathingInstruction">Create your own breathing pattern</p>
                 
-                <div class="meditation-item">
-                    <div class="meditation-info">
-                        <h4>Stress Relief</h4>
-                        <p>10 minutes • Release tension and find calm</p>
-                    </div>
-                    <button class="meditation-play" onclick="playMeditation('Stress Relief', 600)">Play</button>
-                </div>
-                
-                <div class="meditation-item">
-                    <div class="meditation-info">
-                        <h4>Confidence Boost</h4>
-                        <p>8 minutes • Build self-confidence and inner strength</p>
-                    </div>
-                    <button class="meditation-play" onclick="playMeditation('Confidence Boost', 480)">Play</button>
-                </div>
-                
-                <div class="meditation-item">
-                    <div class="meditation-info">
-                        <h4>Loving Kindness</h4>
-                        <p>12 minutes • Cultivate compassion for yourself and others</p>
-                    </div>
-                    <button class="meditation-play" onclick="playMeditation('Loving Kindness', 720)">Play</button>
-                </div>
-                
-                <div class="meditation-item">
-                    <div class="meditation-info">
-                        <h4>Body Scan</h4>
-                        <p>15 minutes • Progressive relaxation and awareness</p>
-                    </div>
-                    <button class="meditation-play" onclick="playMeditation('Body Scan', 900)">Play</button>
+                <div class="custom-breathing-form">
+                    <label for="inhaleDuration">Inhale Duration (seconds):</label>
+                    <input type="number" id="inhaleDuration" min="2" max="20" value="4">
+                    
+                    <label for="holdDuration">Hold Duration (seconds):</label>
+                    <input type="number" id="holdDuration" min="0" max="20" value="4">
+                    
+                    <label for="exhaleDuration">Exhale Duration (seconds):</label>
+                    <input type="number" id="exhaleDuration" min="2" max="20" value="6">
+                    
+                    <button onclick="startCustomBreathing()">Start Custom Breathing</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Sleep Stories Modal -->
-    <div id="sleepStoriesModal" class="modal">
+    <!-- Book Meditation Modal -->
+    <div id="bookModal" class="modal">
         <div class="modal-content">
-            <span class="close" onclick="closeModal('sleepStoriesModal')">&times;</span>
-            <h2>Sleep Stories</h2>
+            <span class="close" onclick="closeModal('bookModal')">&times;</span>
+            <h2>Book Meditation</h2>
+            <p style="color: #6b7280; margin-bottom: 20px;">Listen to these transformative books in 15-minute daily sessions.</p>
             
-            <div class="meditation-list">
-                <div class="meditation-item">
-                    <div class="meditation-info">
-                        <h4>Peaceful Forest</h4>
-                        <p>20 minutes • A gentle walk through a serene woodland</p>
+            <div class="book-list">
+                <div class="book-item" onclick="playBook('Atomic Habits', 'James Clear', 'Tiny changes, remarkable results. Learn how to build good habits and break bad ones.', 18000, 'https://youtu.be/3LIWqYdBW5w')">
+                    <div class="book-info">
+                        <h4>Atomic Habits</h4>
+                        <p>James Clear • 5 hours • Tiny changes, remarkable results</p>
                     </div>
-                    <button class="meditation-play" onclick="playSleepStory('Peaceful Forest', 1200)">Play</button>
+                    <button class="book-play">Play</button>
                 </div>
                 
-                <div class="meditation-item">
-                    <div class="meditation-info">
-                        <h4>Ocean Waves</h4>
-                        <p>25 minutes • Drift away with the sound of gentle waves</p>
+                <div class="book-item" onclick="playBook('The 48 Laws of Power', 'Robert Greene', 'Learn the principles of power that have shaped history and can help you navigate complex social situations.', 36000, 'https://youtu.be/_pd6H5ogkug')">
+                    <div class="book-info">
+                        <h4>The 48 Laws of Power</h4>
+                        <p>Robert Greene • 10 hours • Master the principles of power</p>
                     </div>
-                    <button class="meditation-play" onclick="playSleepStory('Ocean Waves', 1500)">Play</button>
+                    <button class="book-play">Play</button>
                 </div>
                 
-                <div class="meditation-item">
-                    <div class="meditation-info">
-                        <h4>Mountain Retreat</h4>
-                        <p>30 minutes • Find peace in a cozy mountain cabin</p>
+                <div class="book-item" onclick="playBook('The 5 Love Languages', 'Gary Chapman', 'Discover how to express love in ways that will be meaningful to your partner and strengthen your relationship.', 14400, 'https://youtu.be/M0YiJ-t8EJk')">
+                    <div class="book-info">
+                        <h4>The 5 Love Languages</h4>
+                        <p>Gary Chapman • 4 hours • Strengthen your relationships</p>
                     </div>
-                    <button class="meditation-play" onclick="playSleepStory('Mountain Retreat', 1800)">Play</button>
+                    <button class="book-play">Play</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Focus Mode Modal -->
+    <div id="focusModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('focusModal')">&times;</span>
+            <h2>Focus Mode</h2>
+            <p style="color: #6b7280; margin-bottom: 20px;">Select a sound to help you concentrate or relax.</p>
+            
+            <div class="sound-grid">
+                <div class="sound-item" onclick="playFocusSound('Ocean Waves with Piano', 3600, 'https://youtu.be/kmhKuif1JCI', 'Gentle waves with calming piano melodies')">
+                    <div class="sound-icon">🌊</div>
+                    <div class="sound-info">
+                        <h4>Ocean Waves with Piano</h4>
+                        <p>Gentle waves with calming piano melodies (1 hour)</p>
+                    </div>
+                    <button class="sound-play">Play</button>
                 </div>
                 
-                <div class="meditation-item">
-                    <div class="meditation-info">
-                        <h4>Starry Night</h4>
-                        <p>18 minutes • A journey through a magical starlit sky</p>
+                <div class="sound-item" onclick="playFocusSound('Rain & Fireplace', 10800, 'https://youtu.be/3sL0omwElxw', 'Cozy combination of rain and crackling fire')">
+                    <div class="sound-icon">🌧️🔥</div>
+                    <div class="sound-info">
+                        <h4>Rain & Fireplace</h4>
+                        <p>Cozy combination of rain and crackling fire (3 hours)</p>
                     </div>
-                    <button class="meditation-play" onclick="playSleepStory('Starry Night', 1080)">Play</button>
+                    <button class="sound-play">Play</button>
+                </div>
+                
+                <div class="sound-item" onclick="playFocusSound('Just Rain', 36000, 'https://youtu.be/zbmP1JP9DNc', 'Pure rain sounds for deep focus')">
+                    <div class="sound-icon">🌧️</div>
+                    <div class="sound-info">
+                        <h4>Just Rain</h4>
+                        <p>Pure rain sounds for deep focus (10 hours)</p>
+                    </div>
+                    <button class="sound-play">Play</button>
+                </div>
+            </div>
+            
+            <button class="color-noise-button" onclick="openColorNoises()">Explore Color Noises</button>
+        </div>
+    </div>
+
+    <!-- Color Noises Modal -->
+    <div id="colorNoiseModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('colorNoiseModal')">&times;</span>
+            <h2>Color Noises</h2>
+            <p style="color: #6b7280; margin-bottom: 20px;">Different noise colors have different effects on focus and relaxation.</p>
+            
+            <div class="color-noise-grid">
+                <div class="color-noise-item" onclick="playColorNoise('White Noise', 'Equal energy across all frequencies - good for masking distractions', 'https://youtu.be/nMfPqeZjc2c')">
+                    <div class="color-noise-icon">⚪</div>
+                    <div class="color-noise-info">
+                        <h4>White Noise</h4>
+                        <p>Equal energy across all frequencies - good for masking distractions</p>
+                    </div>
+                    <button class="color-noise-play">Play</button>
+                </div>
+                
+                <div class="color-noise-item" onclick="playColorNoise('Pink Noise', 'More power in lower frequencies - natural and calming', 'https://youtu.be/HIkAOMw_sjw')">
+                    <div class="color-noise-icon">🌸</div>
+                    <div class="color-noise-info">
+                        <h4>Pink Noise</h4>
+                        <p>More power in lower frequencies - natural and calming</p>
+                    </div>
+                    <button class="color-noise-play">Play</button>
+                </div>
+                
+                <div class="color-noise-item" onclick="playColorNoise('Brown Noise', 'Strong low frequencies - deep and grounding', 'https://youtu.be/snlA7rFR0iQ')">
+                    <div class="color-noise-icon">🟤</div>
+                    <div class="color-noise-info">
+                        <h4>Brown Noise</h4>
+                        <p>Strong low frequencies - deep and grounding</p>
+                    </div>
+                    <button class="color-noise-play">Play</button>
+                </div>
+                
+                <div class="color-noise-item" onclick="playColorNoise('Blue Noise', 'Emphasizes higher frequencies - sharp and intense', 'https://youtu.be/A7LjWtnw8d8')">
+                    <div class="color-noise-icon">🔵</div>
+                    <div class="color-noise-info">
+                        <h4>Blue Noise</h4>
+                        <p>Emphasizes higher frequencies - sharp and intense</p>
+                    </div>
+                    <button class="color-noise-play">Play</button>
+                </div>
+                
+                <div class="color-noise-item" onclick="playColorNoise('Violet Noise', 'Very high-frequency only - technical use', 'https://youtu.be/tbV22kjkL10')">
+                    <div class="color-noise-icon">🟣</div>
+                    <div class="color-noise-info">
+                        <h4>Violet Noise</h4>
+                        <p>Very high-frequency only - technical use</p>
+                    </div>
+                    <button class="color-noise-play">Play</button>
+                </div>
+                
+                <div class="color-noise-item" onclick="playColorNoise('Gray Noise', 'Perceptually balanced to human hearing', 'https://youtu.be/I83F4sdpZnM')">
+                    <div class="color-noise-icon">⚫</div>
+                    <div class="color-noise-info">
+                        <h4>Gray Noise</h4>
+                        <p>Perceptually balanced to human hearing</p>
+                    </div>
+                    <button class="color-noise-play">Play</button>
+                </div>
+                
+                <div class="color-noise-item" onclick="playColorNoise('Green Noise', 'Mid-to-low frequencies - peaceful and natural', 'https://youtu.be/LKOkPHSlBc4')">
+                    <div class="color-noise-icon">🌿</div>
+                    <div class="color-noise-info">
+                        <h4>Green Noise</h4>
+                        <p>Mid-to-low frequencies - peaceful and natural</p>
+                    </div>
+                    <button class="color-noise-play">Play</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Player Modal -->
+    <div id="playerModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="stopPlayer()">&times;</span>
+            <h2 id="playerTitle">Now Playing</h2>
+            <p id="playerDescription" style="color: #6b7280; margin-bottom: 20px;"></p>
+            
+            <div class="timer-display" id="playerTimer">00:00</div>
+            
+            <div id="youtubePlayer" style="width: 100%; height: 0; padding-bottom: 56.25%; position: relative;">
+                <iframe id="youtubeIframe" width="100%" height="100%" style="position: absolute; top: 0; left: 0;" 
+                    frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                    allowfullscreen></iframe>
+            </div>
+            
+            <div style="margin-top: 20px;">
+                <p>Session Progress: <span id="sessionProgress">0</span> minutes</p>
+                <p>XP Earned: <span id="playerXp">0</span></p>
+                <div class="xp-progress">
+                    <div class="xp-progress-bar" id="playerXpProgress"></div>
                 </div>
             </div>
         </div>
@@ -701,11 +879,18 @@
         };
         
         let currentUser = null;
+        let currentUserStats = null;
         let breathingTimer = null;
         let breathingStartTime = null;
         let breathingDurationInterval = null;
         let currentXp = 0;
         let nextLevelXp = 100;
+        let playerInterval = null;
+        let playerStartTime = null;
+        let playerElapsedTime = 0;
+        let currentSessionType = null;
+        let currentSessionName = null;
+        let currentSessionUrl = null;
 
         // Check authentication and load user data
         async function checkAuth() {
@@ -742,23 +927,36 @@
                         .from('user_stats')
                         .insert({
                             user_id: currentUser.id,
-                            breathing_streak: 0,
                             breathing_level: 1,
                             breathing_xp: 0,
-                            total_breathing_xp: 0,
                             total_breathing_sessions: 0,
-                            total_meditation_sessions: 0
+                            total_meditation_sessions: 0,
+                            total_book_sessions: 0,
+                            total_focus_sessions: 0,
+                            total_minutes: 0,
+                            total_xp: 0,
+                            last_session_date: null
                         })
                         .select()
                         .single();
                     
                     if (initError) throw initError;
+                    currentUserStats = newStats;
                     return updateUIWithStats(newStats);
                 }
                 
+                currentUserStats = stats;
                 updateUIWithStats(stats);
                 
-                // Calculate total minutes from sessions
+                // Calculate total minutes from all sessions
+                await calculateTotalMinutes();
+            } catch (error) {
+                console.error('Error loading user stats:', error);
+            }
+        }
+
+        async function calculateTotalMinutes() {
+            try {
                 const { data: breathingSessions } = await supabase
                     .from('breathing_sessions')
                     .select('duration')
@@ -769,33 +967,58 @@
                     .select('duration')
                     .eq('user_id', currentUser.id);
                 
+                const { data: bookSessions } = await supabase
+                    .from('book_sessions')
+                    .select('duration')
+                    .eq('user_id', currentUser.id);
+                
+                const { data: focusSessions } = await supabase
+                    .from('focus_sessions')
+                    .select('duration')
+                    .eq('user_id', currentUser.id);
+                
                 const totalMinutes = Math.floor(
                     ((breathingSessions || []).reduce((sum, session) => sum + session.duration, 0) +
-                    (meditationSessions || []).reduce((sum, session) => sum + session.duration, 0)) / 60
+                    (meditationSessions || []).reduce((sum, session) => sum + session.duration, 0) +
+                    (bookSessions || []).reduce((sum, session) => sum + session.duration, 0) +
+                    (focusSessions || []).reduce((sum, session) => sum + session.duration, 0)) / 60
                 );
                 
                 document.getElementById('totalMinutes').textContent = totalMinutes;
             } catch (error) {
-                console.error('Error loading user stats:', error);
+                console.error('Error calculating total minutes:', error);
             }
         }
 
         function updateUIWithStats(stats) {
-            document.getElementById('breathingStreak').textContent = stats.breathing_streak || 0;
             document.getElementById('breathingLevel').textContent = stats.breathing_level || 1;
             document.getElementById('totalSessions').textContent = 
-                (stats.total_breathing_sessions || 0) + (stats.total_meditation_sessions || 0);
+                (stats.total_breathing_sessions || 0) + 
+                (stats.total_meditation_sessions || 0) + 
+                (stats.total_book_sessions || 0) + 
+                (stats.total_focus_sessions || 0);
+            document.getElementById('totalXp').textContent = stats.total_xp || 0;
             
             currentXp = stats.breathing_xp || 0;
-            nextLevelXp = 100 + ((stats.breathing_level || 1) - 1) * 50;
+            nextLevelXp = 100 * (stats.breathing_level || 1);
             updateXpProgress(currentXp, nextLevelXp);
+            
+            // Show/hide custom breathing button based on level
+            const customBtn = document.getElementById('customBreathingBtn');
+            if (stats.breathing_level >= 2) {
+                customBtn.style.display = 'inline-block';
+            } else {
+                customBtn.style.display = 'none';
+            }
         }
 
         function updateXpProgress(current, needed) {
             const percentage = Math.min(100, (current / needed) * 100);
             document.getElementById('xpProgressBar').style.width = `${percentage}%`;
             document.getElementById('breathingXpProgress').style.width = `${percentage}%`;
+            document.getElementById('playerXpProgress').style.width = `${percentage}%`;
             document.getElementById('breathingXp').textContent = current;
+            document.getElementById('playerXp').textContent = current;
             document.getElementById('nextLevelXp').textContent = needed;
         }
 
@@ -828,12 +1051,25 @@
             document.getElementById('breathingModal').style.display = 'block';
         }
 
-        function openMeditationLibrary() {
-            document.getElementById('meditationModal').style.display = 'block';
+        function openCustomBreathing() {
+            if (currentUserStats.breathing_level < 2) {
+                alert("Custom breathing exercises unlock at Level 2!");
+                return;
+            }
+            document.getElementById('customBreathingModal').style.display = 'block';
         }
 
-        function openSleepStories() {
-            document.getElementById('sleepStoriesModal').style.display = 'block';
+        function openBookMeditation() {
+            document.getElementById('bookModal').style.display = 'block';
+        }
+
+        function openFocusMode() {
+            document.getElementById('focusModal').style.display = 'block';
+        }
+
+        function openColorNoises() {
+            document.getElementById('colorNoiseModal').style.display = 'block';
+            document.getElementById('focusModal').style.display = 'none';
         }
 
         function closeModal(modalId) {
@@ -893,6 +1129,9 @@
                 chatContainer.appendChild(aiMessage);
                 
                 chatContainer.scrollTop = chatContainer.scrollHeight;
+                
+                // Save chat session
+                await saveTherapyChat(message, data.choices[0].message.content);
             } catch (error) {
                 console.error('Error sending therapy message:', error);
                 const errorMessage = document.createElement('div');
@@ -900,6 +1139,79 @@
                 errorMessage.innerHTML = `<p>I'm having connection issues. Please try again later.</p>`;
                 chatContainer.appendChild(errorMessage);
                 chatContainer.scrollTop = chatContainer.scrollHeight;
+            }
+        }
+
+        async function saveTherapyChat(userMessage, aiResponse) {
+            try {
+                // Check if there's an existing active chat session
+                const { data: existingChat, error: fetchError } = await supabase
+                    .from('therapy_chats')
+                    .select('*')
+                    .eq('user_id', currentUser.id)
+                    .order('created_at', { ascending: false })
+                    .limit(1);
+                
+                let chatId = null;
+                let messages = [];
+                
+                if (!fetchError && existingChat.length > 0) {
+                    // Continue existing chat
+                    chatId = existingChat[0].id;
+                    messages = existingChat[0].messages;
+                }
+                
+                // Add new messages
+                messages.push({
+                    role: 'user',
+                    content: userMessage,
+                    timestamp: new Date().toISOString()
+                }, {
+                    role: 'assistant',
+                    content: aiResponse,
+                    timestamp: new Date().toISOString()
+                });
+                
+                // Generate a session name from AI response if new chat
+                let sessionName = 'Therapy Session';
+                if (!chatId) {
+                    const nameResponse = await fetch(OPENROUTER_CONFIG.url, {
+                        method: 'POST',
+                        headers: OPENROUTER_CONFIG.headers,
+                        body: JSON.stringify({
+                            model: OPENROUTER_CONFIG.model,
+                            messages: [{
+                                role: 'system',
+                                content: 'Generate a very short (2-3 word) descriptive name for this therapy session based on the assistant\'s first response. Examples: "Stress Relief", "Anxiety Talk", "Relationship Advice"'
+                            }, {
+                                role: 'user',
+                                content: aiResponse
+                            }],
+                            max_tokens: 20,
+                            temperature: 0.3
+                        })
+                    });
+                    
+                    if (nameResponse.ok) {
+                        const nameData = await nameResponse.json();
+                        sessionName = nameData.choices[0].message.content.replace(/"/g, '').trim();
+                    }
+                }
+                
+                // Upsert chat session
+                const { error } = await supabase
+                    .from('therapy_chats')
+                    .upsert({
+                        id: chatId,
+                        user_id: currentUser.id,
+                        session_name: sessionName,
+                        messages: messages,
+                        updated_at: new Date().toISOString()
+                    });
+                
+                if (error) throw error;
+            } catch (error) {
+                console.error('Error saving therapy chat:', error);
             }
         }
 
@@ -971,6 +1283,67 @@
             breathingCycle();
         }
 
+        function startCustomBreathing() {
+            const inhale = parseInt(document.getElementById('inhaleDuration').value) || 4;
+            const hold = parseInt(document.getElementById('holdDuration').value) || 0;
+            const exhale = parseInt(document.getElementById('exhaleDuration').value) || 6;
+            
+            const circle = document.getElementById('breathingCircle');
+            const text = document.getElementById('breathingText');
+            const instruction = document.getElementById('breathingInstruction');
+            const stopBtn = document.getElementById('stopBreathingBtn');
+            
+            closeModal('customBreathingModal');
+            
+            stopBtn.style.display = 'inline-block';
+            breathingStartTime = Date.now();
+            
+            // Start duration counter
+            breathingDurationInterval = setInterval(updateBreathingDuration, 1000);
+            
+            let cycle = { inhale: inhale, hold1: hold, exhale: exhale, hold2: 0 };
+            let phase = 0; // 0: inhale, 1: hold1, 2: exhale, 3: hold2
+            let count = 0;
+            
+            const phases = ['inhale', 'hold1', 'exhale', 'hold2'];
+            const phaseTexts = ['Inhale', 'Hold', 'Exhale', 'Hold'];
+            const phaseDurations = [cycle.inhale, cycle.hold1, cycle.exhale, cycle.hold2];
+            
+            instruction.textContent = `Custom Breathing (${inhale}-${hold}-${exhale}) - Follow the circle`;
+            
+            function breathingCycle() {
+                if (!breathingTimer) return;
+                
+                const currentPhase = phases[phase];
+                const duration = phaseDurations[phase];
+                
+                if (duration === 0) {
+                    phase = (phase + 1) % 4;
+                    return breathingCycle();
+                }
+                
+                text.textContent = `${phaseTexts[phase]} ${duration - count}`;
+                
+                if (currentPhase === 'inhale') {
+                    circle.className = 'breathing-circle inhale';
+                } else if (currentPhase === 'exhale') {
+                    circle.className = 'breathing-circle exhale';
+                } else {
+                    circle.className = 'breathing-circle';
+                }
+                
+                count++;
+                
+                if (count > duration) {
+                    count = 0;
+                    phase = (phase + 1) % 4;
+                }
+            }
+            
+            breathingTimer = setInterval(breathingCycle, 1000);
+            breathingCycle();
+        }
+
         function stopBreathingExercise() {
             if (breathingTimer) {
                 clearInterval(breathingTimer);
@@ -992,12 +1365,13 @@
             instruction.textContent = 'Great job! Choose another exercise or close to continue.';
             stopBtn.style.display = 'none';
             
-            // Save session if it lasted more than 30 seconds
-            if (breathingStartTime && Date.now() - breathingStartTime > 30000) {
+            // Save session if it lasted more than 7 minutes (420 seconds)
+            if (breathingStartTime && Date.now() - breathingStartTime > 420000) {
                 saveBreathingSession();
             }
             
             document.getElementById('breathingDuration').textContent = '00:00';
+            document.getElementById('breathingXp').textContent = '0';
         }
 
         function updateBreathingDuration() {
@@ -1008,8 +1382,8 @@
                 document.getElementById('breathingDuration').textContent = 
                     `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
                 
-                // Update XP display (1 XP per minute)
-                const xp = minutes;
+                // Update XP display (10 XP per minute)
+                const xp = minutes * 10;
                 document.getElementById('breathingXp').textContent = xp;
                 updateXpProgress(currentXp + xp, nextLevelXp);
             }
@@ -1033,19 +1407,15 @@
                     .eq('user_id', user.id)
                     .single();
                     
-                const today = new Date().toISOString().split('T')[0];
-                const lastSession = currentStats?.last_breathing_session;
-                const isConsecutive = lastSession && 
-                    new Date(lastSession).getTime() === new Date(today).getTime() - 86400000;
-                
-                // Calculate experience points (1 XP per minute)
-                const xpEarned = minutes;
+                // Calculate experience points (10 XP per minute)
+                const xpEarned = minutes * 10;
                 const currentLevel = currentStats?.breathing_level || 1;
                 const currentXp = currentStats?.breathing_xp || 0;
                 const totalXp = currentXp + xpEarned;
-                const xpNeeded = 100 + (currentLevel - 1) * 50;
-                const levelsGained = totalXp >= xpNeeded ? Math.floor((totalXp - currentXp) / xpNeeded) : 0;
+                const xpNeeded = 100 * currentLevel;
+                const levelsGained = Math.floor(totalXp / xpNeeded);
                 const newLevel = currentLevel + levelsGained;
+                const remainingXp = totalXp % xpNeeded;
                 
                 // Save breathing session
                 const { error: sessionError } = await supabase
@@ -1055,7 +1425,8 @@
                         session_type: 'breathing',
                         duration: duration,
                         level: newLevel,
-                        xp_earned: xpEarned
+                        xp_earned: xpEarned,
+                        custom_pattern: document.getElementById('customBreathingBtn').style.display === 'inline-block'
                     });
                     
                 if (sessionError) throw sessionError;
@@ -1065,12 +1436,11 @@
                     .from('user_stats')
                     .upsert({
                         user_id: user.id,
-                        breathing_streak: isConsecutive ? (currentStats?.breathing_streak || 0) + 1 : 1,
                         total_breathing_sessions: (currentStats?.total_breathing_sessions || 0) + 1,
-                        last_breathing_session: today,
                         breathing_level: newLevel,
-                        breathing_xp: totalXp % xpNeeded,
-                        total_breathing_xp: (currentStats?.total_breathing_xp || 0) + xpEarned,
+                        breathing_xp: remainingXp,
+                        total_xp: (currentStats?.total_xp || 0) + xpEarned,
+                        last_session_date: new Date().toISOString(),
                         updated_at: new Date().toISOString()
                     });
                     
@@ -1094,67 +1464,192 @@
             }
         }
 
-        // Meditation Functions
-        async function playMeditation(name, duration) {
-            alert(`Starting "${name}" meditation (${Math.floor(duration/60)} minutes)\n\nThis is a demo. In a full app, this would play audio and track progress.`);
+        // Book Meditation Functions
+        function playBook(title, author, description, duration, url) {
+            currentSessionType = 'book';
+            currentSessionName = title;
+            currentSessionUrl = url;
             
-            try {
-                // Save meditation session
-                const { error } = await supabase
-                    .from('meditation_sessions')
-                    .insert([{
-                        user_id: currentUser.id,
-                        session_type: 'meditation',
-                        session_name: name,
-                        duration: duration,
-                        completed: true
-                    }]);
-                
-                if (!error) {
-                    // Update stats
-                    const { data: currentStats } = await supabase
-                        .from('user_stats')
-                        .select('*')
-                        .eq('user_id', currentUser.id)
-                        .single();
-                    
-                    await supabase
-                        .from('user_stats')
-                        .upsert({
-                            user_id: currentUser.id,
-                            total_meditation_sessions: (currentStats?.total_meditation_sessions || 0) + 1,
-                            updated_at: new Date().toISOString()
-                        });
-                    
-                    await loadUserStats();
-                }
-            } catch (error) {
-                console.error('Error saving meditation session:', error);
+            document.getElementById('playerTitle').textContent = title;
+            document.getElementById('playerDescription').textContent = `${author} • ${description}`;
+            document.getElementById('playerModal').style.display = 'block';
+            document.getElementById('bookModal').style.display = 'none';
+            
+            // Load YouTube video
+            const videoId = extractVideoId(url);
+            document.getElementById('youtubeIframe').src = `https://www.youtube.com/embed/${videoId}?autoplay=1&enablejsapi=1`;
+            
+            // Start timer
+            startPlayerTimer();
+        }
+
+        // Focus Mode Functions
+        function playFocusSound(name, duration, url, description) {
+            currentSessionType = 'focus';
+            currentSessionName = name;
+            currentSessionUrl = url;
+            
+            document.getElementById('playerTitle').textContent = name;
+            document.getElementById('playerDescription').textContent = description;
+            document.getElementById('playerModal').style.display = 'block';
+            document.getElementById('focusModal').style.display = 'none';
+            document.getElementById('colorNoiseModal').style.display = 'none';
+            
+            // Load YouTube video
+            const videoId = extractVideoId(url);
+            document.getElementById('youtubeIframe').src = `https://www.youtube.com/embed/${videoId}?autoplay=1&enablejsapi=1`;
+            
+            // Start timer
+            startPlayerTimer();
+        }
+
+        function playColorNoise(name, description, url) {
+            currentSessionType = 'focus';
+            currentSessionName = name;
+            currentSessionUrl = url;
+            
+            document.getElementById('playerTitle').textContent = name;
+            document.getElementById('playerDescription').textContent = description;
+            document.getElementById('playerModal').style.display = 'block';
+            document.getElementById('colorNoiseModal').style.display = 'none';
+            
+            // Load YouTube video
+            const videoId = extractVideoId(url);
+            document.getElementById('youtubeIframe').src = `https://www.youtube.com/embed/${videoId}?autoplay=1&enablejsapi=1`;
+            
+            // Start timer
+            startPlayerTimer();
+        }
+
+        function extractVideoId(url) {
+            const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+            const match = url.match(regExp);
+            return (match && match[2].length === 11) ? match[2] : null;
+        }
+
+        function startPlayerTimer() {
+            playerStartTime = Date.now();
+            playerElapsedTime = 0;
+            document.getElementById('playerTimer').textContent = '00:00';
+            document.getElementById('sessionProgress').textContent = '0';
+            
+            if (playerInterval) {
+                clearInterval(playerInterval);
+            }
+            
+            playerInterval = setInterval(updatePlayerTimer, 1000);
+        }
+
+        function updatePlayerTimer() {
+            playerElapsedTime = Math.floor((Date.now() - playerStartTime) / 1000);
+            const minutes = Math.floor(playerElapsedTime / 60);
+            const seconds = playerElapsedTime % 60;
+            
+            document.getElementById('playerTimer').textContent = 
+                `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            
+            // Update session progress (counts every full minute)
+            document.getElementById('sessionProgress').textContent = minutes;
+            
+            // For books, save progress every 15 minutes
+            if (currentSessionType === 'book' && minutes > 0 && minutes % 15 === 0) {
+                savePlayerSession();
+            }
+            
+            // For focus sounds, save progress every 15 minutes
+            if (currentSessionType === 'focus' && minutes > 0 && minutes % 15 === 0) {
+                savePlayerSession();
             }
         }
 
-        // Sleep Story Functions
-        async function playSleepStory(name, duration) {
-            alert(`Playing sleep story "${name}" (${Math.floor(duration/60)} minutes)\n\nThis is a demo. In a full app, this would play calming audio designed for sleep.`);
+        async function savePlayerSession() {
+            if (!playerStartTime) return;
+            
+            const duration = playerElapsedTime;
+            const minutes = Math.floor(duration / 60);
             
             try {
-                // Save sleep story session
-                const { error } = await supabase
-                    .from('meditation_sessions')
-                    .insert([{
-                        user_id: currentUser.id,
-                        session_type: 'sleep_story',
-                        session_name: name,
-                        duration: duration,
-                        completed: true
-                    }]);
+                // First verify the user exists
+                const { data: { user } } = await supabase.auth.getUser();
+                if (!user) throw new Error('User not authenticated');
                 
-                if (!error) {
-                    await loadUserStats();
+                // Get current stats
+                const { data: currentStats } = await supabase
+                    .from('user_stats')
+                    .select('*')
+                    .eq('user_id', user.id)
+                    .single();
+                
+                let sessionTable, sessionData, statsUpdate;
+                const xpEarned = minutes * 5; // 5 XP per minute for these activities
+                
+                if (currentSessionType === 'book') {
+                    sessionTable = 'book_sessions';
+                    sessionData = {
+                        user_id: user.id,
+                        book_title: currentSessionName,
+                        duration: duration,
+                        progress: minutes,
+                        completed: minutes >= 15 // Mark as completed if at least 15 minutes
+                    };
+                    
+                    statsUpdate = {
+                        total_book_sessions: (currentStats?.total_book_sessions || 0) + 1,
+                        total_xp: (currentStats?.total_xp || 0) + xpEarned,
+                        last_session_date: new Date().toISOString(),
+                        updated_at: new Date().toISOString()
+                    };
+                } else if (currentSessionType === 'focus') {
+                    sessionTable = 'focus_sessions';
+                    sessionData = {
+                        user_id: user.id,
+                        sound_type: currentSessionName,
+                        duration: duration,
+                        completed: minutes >= 15 // Mark as completed if at least 15 minutes
+                    };
+                    
+                    statsUpdate = {
+                        total_focus_sessions: (currentStats?.total_focus_sessions || 0) + 1,
+                        total_xp: (currentStats?.total_xp || 0) + xpEarned,
+                        last_session_date: new Date().toISOString(),
+                        updated_at: new Date().toISOString()
+                    };
                 }
+                
+                // Save session
+                const { error: sessionError } = await supabase
+                    .from(sessionTable)
+                    .insert(sessionData);
+                    
+                if (sessionError) throw sessionError;
+                
+                // Update user stats
+                const { error: statsError } = await supabase
+                    .from('user_stats')
+                    .upsert(statsUpdate);
+                    
+                if (statsError) throw statsError;
+                
+                await loadUserStats();
             } catch (error) {
-                console.error('Error saving sleep story session:', error);
+                console.error('Error saving player session:', error);
             }
+        }
+
+        function stopPlayer() {
+            if (playerInterval) {
+                clearInterval(playerInterval);
+                playerInterval = null;
+            }
+            
+            // Save session if it lasted more than 15 minutes
+            if (playerStartTime && playerElapsedTime >= 900) {
+                savePlayerSession();
+            }
+            
+            // Stop YouTube video
+            document.getElementById('youtubeIframe').src = '';
+            document.getElementById('playerModal').style.display = 'none';
         }
 
         // Close modals when clicking outside
@@ -1165,6 +1660,9 @@
                     modal.style.display = 'none';
                     if (modal.id === 'breathingModal') {
                         stopBreathingExercise();
+                    }
+                    if (modal.id === 'playerModal') {
+                        stopPlayer();
                     }
                 }
             }
