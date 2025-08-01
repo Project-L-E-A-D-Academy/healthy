@@ -762,11 +762,11 @@
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${OPENAI_API_KEY}`,
-                        'HTTP-Referer': 'https://lead-wellness-app.com',
+                        'HTTP-Referer': 'https://project-l-e-a-d-academy.github.io',
                         'X-Title': 'LEAD Wellness App'
                     },
                     body: JSON.stringify({
-                        model: 'deepseek/deepseek-v3',
+                        model: 'deepseek/deepseek-v3-base',
                         messages: [{
                             role: 'system',
                             content: `You are a friendly AI Food Coach for teenagers. Provide helpful, science-based nutrition advice that's age-appropriate and encouraging. Focus on balanced eating, healthy habits, and positive relationships with food. Current user diet preference: ${currentDietPreference}. ${mealContext}. Keep responses conversational and supportive.`
@@ -780,6 +780,18 @@
                 });
                 
                 const data = await response.json();
+                
+                // Better error handling
+                if (!response.ok) {
+                    console.error('API Response:', data);
+                    throw new Error(`API Error: ${response.status} - ${data.error?.message || 'Unknown error'}`);
+                }
+                
+                if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+                    console.error('Unexpected API response structure:', data);
+                    throw new Error('Invalid response format from AI service');
+                }
+                
                 const aiResponse = data.choices[0].message.content;
                 
                 // Add AI response
