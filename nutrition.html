@@ -744,6 +744,14 @@
             input.value = '';
             chatContainer.scrollTop = chatContainer.scrollHeight;
             
+            // Add loading message
+            const loadingMessage = document.createElement('div');
+            loadingMessage.className = 'chat-message ai';
+            loadingMessage.innerHTML = `<p>Thinking...</p>`;
+            loadingMessage.id = 'loadingMessage';
+            chatContainer.appendChild(loadingMessage);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+            
             try {
                 // Get user's recent meals for context
                 const { data: recentMeals } = await supabase
@@ -757,6 +765,9 @@
                     ? `Recent meals: ${recentMeals.map(m => `${m.meal_name} (${m.meal_type}, ${m.calories || 'unknown'} calories)`).join(', ')}`
                     : 'No recent meals logged';
                 
+                console.log('Sending request to OpenRouter...');
+                console.log('API Key (first 10 chars):', OPENAI_API_KEY.substring(0, 10) + '...');
+                
                 const response = await fetch(OPENAI_API_URL, {
                     method: 'POST',
                     headers: {
@@ -766,7 +777,7 @@
                         'X-Title': 'LEAD Wellness App'
                     },
                     body: JSON.stringify({
-                        model: 'deepseek/deepseek-v3-base',
+                        model: 'meta-llama/llama-3.1-8b-instruct:free',
                         messages: [{
                             role: 'system',
                             content: `You are a friendly AI Food Coach for teenagers. Provide helpful, science-based nutrition advice that's age-appropriate and encouraging. Focus on balanced eating, healthy habits, and positive relationships with food. Current user diet preference: ${currentDietPreference}. ${mealContext}. Keep responses conversational and supportive.`
@@ -779,17 +790,49 @@
                     })
                 });
                 
+                console.log('Response status:', response.status);
+                console.log('Response headers:', response.headers);
+                
                 const data = await response.json();
+                console.log('Full API response:', data);
+                
+                // Remove loading message
+                const loading = document.getElementById('loadingMessage');
+                if (loading) loading.remove();
                 
                 // Better error handling
                 if (!response.ok) {
-                    console.error('API Response:', data);
-                    throw new Error(`API Error: ${response.status} - ${data.error?.message || 'Unknown error'}`);
+                    console.error('API Error Details:', data);
+                    
+                    let errorMsg = 'I apologize, but I\'m having trouble connecting to my AI service right now. ';
+                    
+                    if (response.status === 401) {
+                        errorMsg += 'This appears to be an authentication issue. Please check that the API key is valid and has sufficient credits.';
+                    } else if (response.status === 429) {
+                        errorMsg += 'Too many requests. Please wait a moment and try again.';
+                    } else if (response.status === 400) {
+                        errorMsg += 'There was an issue with the request format.';
+                    } else {
+                        errorMsg += `Error code: ${response.status}. Please try again later.`;
+                    }
+                    
+                    const errorMessage = document.createElement('div');
+                    errorMessage.className = 'chat-message ai';
+                    errorMessage.innerHTML = `<p>${errorMsg}</p>`;
+                    chatContainer.appendChild(errorMessage);
+                    chatContainer.scrollTop = chatContainer.scrollHeight;
+                    return;
                 }
                 
                 if (!data.choices || !data.choices[0] || !data.choices[0].message) {
                     console.error('Unexpected API response structure:', data);
-                    throw new Error('Invalid response format from AI service');
+                    
+                    const errorMessage = document.createElement('div');
+                    errorMessage.className = 'chat-message ai';
+                    errorMessage.innerHTML = `<p>I received an unexpected response format. Please try asking your question again.</p>`;
+                    chatContainer.appendChild(errorMessage);
+                    chatContainer.scrollTop = chatContainer.scrollHeight;
+                    return;
                 }
                 
                 const aiResponse = data.choices[0].message.content;
@@ -801,12 +844,27 @@
                 chatContainer.appendChild(aiMessage);
                 
                 chatContainer.scrollTop = chatContainer.scrollHeight;
+                
             } catch (error) {
                 console.error('Error sending coach message:', error);
+                
+                // Remove loading message if it exists
+                const loading = document.getElementById('loadingMessage');
+                if (loading) loading.remove();
+                
+                let errorMsg = 'I\'m sorry, I\'m having trouble responding right now. ';
+                
+                if (error.name === 'TypeError' && error.message.includes('fetch')) {
+                    errorMsg += 'This might be a network connectivity issue. Please check your internet connection and try again.';
+                } else {
+                    errorMsg += 'Please try again in a moment.';
+                }
+                
                 const errorMessage = document.createElement('div');
                 errorMessage.className = 'chat-message ai';
-                errorMessage.innerHTML = `<p>I'm sorry, I'm having trouble responding right now. Please try again in a moment.</p>`;
+                errorMessage.innerHTML = `<p>${errorMsg}</p>`;
                 chatContainer.appendChild(errorMessage);
+                chatContainer.scrollTop = chatContainer.scrollHeight;
             }
         }
 
