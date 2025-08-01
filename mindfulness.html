@@ -490,6 +490,38 @@
             color: #1f2937;
         }
 
+        .finger-press-container {
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .finger-press-btn {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: #8b5cf6;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+            font-weight: bold;
+            cursor: pointer;
+            user-select: none;
+            touch-action: manipulation;
+        }
+
+        .finger-press-btn:active {
+            transform: scale(0.95);
+            background: #7c3aed;
+        }
+
+        .press-instruction {
+            margin-top: 10px;
+            color: #6b7280;
+            font-size: 14px;
+        }
+
         @media (max-width: 768px) {
             .activities-grid {
                 grid-template-columns: 1fr;
@@ -552,10 +584,6 @@
                 <div class="stat-card">
                     <div class="stat-value" id="totalMinutes">0</div>
                     <div class="stat-label">Minutes Practiced</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="totalXp">0</div>
-                    <div class="stat-label">Total XP Earned</div>
                 </div>
             </div>
 
@@ -628,14 +656,25 @@
                 <h2>Breathing Exercise</h2>
                 <p id="breathingInstruction">Choose an exercise to begin</p>
                 
+                <div class="finger-press-container" id="fingerPressContainer" style="display: none;">
+                    <div class="finger-press-btn" id="fingerPressBtn" 
+                         ontouchstart="startFingerPress()" 
+                         onmousedown="startFingerPress()"
+                         ontouchend="stopFingerPress()"
+                         onmouseup="stopFingerPress()">
+                        Hold
+                    </div>
+                    <p class="press-instruction">Keep your finger pressed to continue</p>
+                </div>
+                
                 <div class="breathing-circle" id="breathingCircle">
                     <span id="breathingText">Ready</span>
                 </div>
                 
                 <div class="breathing-controls">
-                    <button onclick="startBreathingExercise('box')">Box Breathing (4-4-4-4)</button>
-                    <button onclick="startBreathingExercise('deep')">Deep Breathing (4-6)</button>
-                    <button onclick="startBreathingExercise('calm')">Calming Breath (4-7-8)</button>
+                    <button onclick="prepareBreathingExercise('box')">Box Breathing (4-4-4-4)</button>
+                    <button onclick="prepareBreathingExercise('deep')">Deep Breathing (4-6)</button>
+                    <button onclick="prepareBreathingExercise('calm')">Calming Breath (4-7-8)</button>
                     <button onclick="openCustomBreathing()" id="customBreathingBtn">Custom Breathing</button>
                     <button onclick="stopBreathingExercise()" id="stopBreathingBtn" style="display: none; background: #dc2626;">Stop</button>
                 </div>
@@ -867,16 +906,6 @@
         
         // OpenRouter configuration
         const OPENROUTER_API_KEY = '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';
-        const OPENROUTER_CONFIG = {
-            url: 'https://openrouter.ai/api/v1/chat/completions',
-            model: 'deepseek/deepseek-chat-v3-0324',
-            headers: {
-                'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
-                'HTTP-Referer': 'https://project-l-e-a-d-academy.github.io',
-                'X-Title': 'LEAD Wellness App',
-                'Content-Type': 'application/json'
-            }
-        };
         
         let currentUser = null;
         let currentUserStats = null;
@@ -891,6 +920,9 @@
         let currentSessionType = null;
         let currentSessionName = null;
         let currentSessionUrl = null;
+        let fingerPressInterval = null;
+        let fingerPressActive = false;
+        let currentExerciseType = null;
 
         // Check authentication and load user data
         async function checkAuth() {
@@ -934,7 +966,6 @@
                             total_book_sessions: 0,
                             total_focus_sessions: 0,
                             total_minutes: 0,
-                            total_xp: 0,
                             last_session_date: null
                         })
                         .select()
@@ -997,7 +1028,6 @@
                 (stats.total_meditation_sessions || 0) + 
                 (stats.total_book_sessions || 0) + 
                 (stats.total_focus_sessions || 0);
-            document.getElementById('totalXp').textContent = stats.total_xp || 0;
             
             currentXp = stats.breathing_xp || 0;
             nextLevelXp = 100 * (stats.breathing_level || 1);
@@ -1098,11 +1128,16 @@
             chatContainer.scrollTop = chatContainer.scrollHeight;
             
             try {
-                const response = await fetch(OPENROUTER_CONFIG.url, {
+                const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
                     method: 'POST',
-                    headers: OPENROUTER_CONFIG.headers,
+                    headers: {
+                        'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+                        'HTTP-Referer': 'https://project-l-e-a-d-academy.github.io',
+                        'X-Title': 'LEAD Wellness App',
+                        'Content-Type': 'application/json'
+                    },
                     body: JSON.stringify({
-                        model: OPENROUTER_CONFIG.model,
+                        model: 'deepseek/deepseek-chat-v3-0324',
                         messages: [{
                             role: 'system',
                             content: 'You are a compassionate AI therapy assistant for teenagers. Provide supportive, empathetic responses. Focus on active listening, validation, and gentle guidance. Keep responses conversational and age-appropriate. If someone expresses serious mental health concerns, gently suggest they talk to a trusted adult or professional.'
@@ -1172,30 +1207,10 @@
                     timestamp: new Date().toISOString()
                 });
                 
-                // Generate a session name from AI response if new chat
+                // Generate a session name from user's first message
                 let sessionName = 'Therapy Session';
-                if (!chatId) {
-                    const nameResponse = await fetch(OPENROUTER_CONFIG.url, {
-                        method: 'POST',
-                        headers: OPENROUTER_CONFIG.headers,
-                        body: JSON.stringify({
-                            model: OPENROUTER_CONFIG.model,
-                            messages: [{
-                                role: 'system',
-                                content: 'Generate a very short (2-3 word) descriptive name for this therapy session based on the assistant\'s first response. Examples: "Stress Relief", "Anxiety Talk", "Relationship Advice"'
-                            }, {
-                                role: 'user',
-                                content: aiResponse
-                            }],
-                            max_tokens: 20,
-                            temperature: 0.3
-                        })
-                    });
-                    
-                    if (nameResponse.ok) {
-                        const nameData = await nameResponse.json();
-                        sessionName = nameData.choices[0].message.content.replace(/"/g, '').trim();
-                    }
+                if (messages.length === 2) { // Only for first message
+                    sessionName = userMessage.substring(0, 30) + (userMessage.length > 30 ? '...' : '');
                 }
                 
                 // Upsert chat session
@@ -1222,6 +1237,38 @@
         }
 
         // Breathing Exercise Functions
+        function prepareBreathingExercise(type) {
+            currentExerciseType = type;
+            document.getElementById('fingerPressContainer').style.display = 'block';
+            document.getElementById('breathingInstruction').textContent = 'Press and hold the button to begin';
+        }
+
+        function startFingerPress() {
+            fingerPressActive = true;
+            fingerPressInterval = setInterval(() => {
+                // Check if still pressing every second
+                if (!fingerPressActive) {
+                    clearInterval(fingerPressInterval);
+                    document.getElementById('breathingInstruction').textContent = 'Press and hold the button to continue';
+                }
+            }, 1000);
+            
+            // Start exercise after 3 seconds of continuous press
+            setTimeout(() => {
+                if (fingerPressActive) {
+                    document.getElementById('fingerPressContainer').style.display = 'none';
+                    startBreathingExercise(currentExerciseType);
+                }
+            }, 3000);
+        }
+
+        function stopFingerPress() {
+            fingerPressActive = false;
+            if (fingerPressInterval) {
+                clearInterval(fingerPressInterval);
+            }
+        }
+
         function startBreathingExercise(type) {
             const circle = document.getElementById('breathingCircle');
             const text = document.getElementById('breathingText');
@@ -1396,11 +1443,9 @@
             const minutes = Math.floor(duration / 60);
             
             try {
-                // First verify the user exists
                 const { data: { user } } = await supabase.auth.getUser();
                 if (!user) throw new Error('User not authenticated');
                 
-                // Get current stats
                 const { data: currentStats } = await supabase
                     .from('user_stats')
                     .select('*')
@@ -1416,6 +1461,9 @@
                 const levelsGained = Math.floor(totalXp / xpNeeded);
                 const newLevel = currentLevel + levelsGained;
                 const remainingXp = totalXp % xpNeeded;
+                
+                // Only show level up modal for levels 5, 10, 15, etc.
+                const shouldShowLevelUp = levelsGained > 0 && newLevel % 5 === 0;
                 
                 // Save breathing session
                 const { error: sessionError } = await supabase
@@ -1439,7 +1487,6 @@
                         total_breathing_sessions: (currentStats?.total_breathing_sessions || 0) + 1,
                         breathing_level: newLevel,
                         breathing_xp: remainingXp,
-                        total_xp: (currentStats?.total_xp || 0) + xpEarned,
                         last_session_date: new Date().toISOString(),
                         updated_at: new Date().toISOString()
                     });
@@ -1452,6 +1499,12 @@
                     const text = document.getElementById('breathingText');
                     circle.className = 'breathing-circle inhale';
                     text.textContent = `Level ${newLevel}!`;
+                    
+                    if (shouldShowLevelUp) {
+                        closeModal('breathingModal');
+                        alert(`Congratulations! You've reached Level ${newLevel}!`);
+                    }
+                    
                     setTimeout(() => {
                         circle.className = 'breathing-circle';
                         text.textContent = 'Session Complete';
@@ -1595,7 +1648,6 @@
                     
                     statsUpdate = {
                         total_book_sessions: (currentStats?.total_book_sessions || 0) + 1,
-                        total_xp: (currentStats?.total_xp || 0) + xpEarned,
                         last_session_date: new Date().toISOString(),
                         updated_at: new Date().toISOString()
                     };
@@ -1610,7 +1662,6 @@
                     
                     statsUpdate = {
                         total_focus_sessions: (currentStats?.total_focus_sessions || 0) + 1,
-                        total_xp: (currentStats?.total_xp || 0) + xpEarned,
                         last_session_date: new Date().toISOString(),
                         updated_at: new Date().toISOString()
                     };
