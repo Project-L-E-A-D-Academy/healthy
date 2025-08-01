@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LEAD - Learn. Empower. Achieve. Dream.</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .auth-container {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .logo {
+            font-size: 48px;
+            font-weight: bold;
+            color: #dc2626;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .motto {
+            color: #6b7280;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #374151;
+            font-weight: 500;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #dc2626;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
+            background: #dc2626;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-bottom: 10px;
+        }
+
+        .btn:hover {
+            background: #b91c1c;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: #dc2626;
+            border: 2px solid #dc2626;
+        }
+
+        .btn-secondary:hover {
+            background: #dc2626;
+            color: white;
+        }
+
+        .error {
+            color: #dc2626;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+
+        .success {
+            color: #059669;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+
+        .form-toggle {
+            margin-top: 20px;
+            color: #6b7280;
+        }
+
+        .form-toggle a {
+            color: #dc2626;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .signup-fields {
+            display: none;
+        }
+
+        .signup-fields.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="logo">LEAD</div>
+        <div class="motto">Learn. Empower. Achieve. Dream.</div>
+        
+        <form id="authForm">
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" required>
+            </div>
+            
+            <div class="signup-fields" id="signupFields">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username">
+                </div>
+                
+                <div class="form-group">
+                    <label for="birthday">Birthday</label>
+                    <input type="date" id="birthday">
+                </div>
+                
+                <div class="form-group">
+                    <label for="gradeLevel">Grade Level</label>
+                    <select id="gradeLevel">
+                        <option value="">Select Grade Level</option>
+                        <option value="6th">6th Grade</option>
+                        <option value="7th">7th Grade</option>
+                        <option value="8th">8th Grade</option>
+                        <option value="9th">9th Grade</option>
+                        <option value="10th">10th Grade</option>
+                        <option value="11th">11th Grade</option>
+                        <option value="12th">12th Grade</option>
+                    </select>
+                </div>
+            </div>
+            
+            <button type="submit" class="btn" id="submitBtn">Sign In</button>
+            <button type="button" class="btn btn-secondary" id="toggleBtn">Create Account</button>
+            
+            <div id="message"></div>
+        </form>
+        
+        <div class="form-toggle">
+            <p id="toggleText">New to LEAD? <a href="#" id="toggleLink">Sign up here</a></p>
+        </div>
+    </div>
+
+    <script>
+        // Supabase configuration
+        const SUPABASE_URL = 'https://fhthwxgkxuontprzclhb.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZodGh3eGdreHVvbnRwcnpjbGhiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQwNDczNDgsImV4cCI6MjA2OTYyMzM0OH0.9mEHL1jpYXkMeWg0UNKK5LYPosj0eou4k-mw3eof-ZU';
+        
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        let isSignUp = false;
+        
+        // DOM elements
+        const form = document.getElementById('authForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const toggleBtn = document.getElementById('toggleBtn');
+        const signupFields = document.getElementById('signupFields');
+        const message = document.getElementById('message');
+        const toggleText = document.getElementById('toggleText');
+        const toggleLink = document.getElementById('toggleLink');
+        
+        // Toggle between login and signup
+        function toggleForm() {
+            isSignUp = !isSignUp;
+            
+            if (isSignUp) {
+                signupFields.classList.add('active');
+                submitBtn.textContent = 'Create Account';
+                toggleBtn.textContent = 'Back to Sign In';
+                toggleText.innerHTML = 'Already have an account? <a href="#" id="toggleLink">Sign in here</a>';
+            } else {
+                signupFields.classList.remove('active');
+                submitBtn.textContent = 'Sign In';
+                toggleBtn.textContent = 'Create Account';
+                toggleText.innerHTML = 'New to LEAD? <a href="#" id="toggleLink">Sign up here</a>';
+            }
+        }
+        
+        toggleBtn.addEventListener('click', toggleForm);
+        toggleLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            toggleForm();
+        });
+        
+        // Show message
+        function showMessage(msg, type = 'error') {
+            message.textContent = msg;
+            message.className = type;
+        }
+        
+        // Handle form submission
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            try {
+                if (isSignUp) {
+                    const username = document.getElementById('username').value;
+                    const birthday = document.getElementById('birthday').value;
+                    const gradeLevel = document.getElementById('gradeLevel').value;
+                    
+                    if (!username || !birthday || !gradeLevel) {
+                        showMessage('Please fill in all fields');
+                        return;
+                    }
+                    
+                    // Sign up user
+                    const { data, error } = await supabase.auth.signUp({
+                        email: email,
+                        password: password
+                    });
+                    
+                    if (error) {
+                        showMessage(error.message);
+                        return;
+                    }
+                    
+                    if (data.user) {
+                        // Create user profile
+                        const { error: profileError } = await supabase
+                            .from('user_profiles')
+                            .insert([{
+                                id: data.user.id,
+                                username: username,
+                                birthday: birthday,
+                                grade_level: gradeLevel
+                            }]);
+                            
+                        if (profileError) {
+                            showMessage('Profile creation error: ' + profileError.message);
+                            return;
+                        }
+                        
+                        showMessage('Account created successfully! Please check your email to confirm.', 'success');
+                    }
+                } else {
+                    // Sign in user
+                    const { data, error } = await supabase.auth.signInWithPassword({
+                        email: email,
+                        password: password
+                    });
+                    
+                    if (error) {
+                        showMessage(error.message);
+                        return;
+                    }
+                    
+                    if (data.user) {
+                        showMessage('Signing in...', 'success');
+                        setTimeout(() => {
+                            window.location.href = 'menu.html';
+                        }, 1000);
+                    }
+                }
+            } catch (error) {
+                showMessage('An unexpected error occurred: ' + error.message);
+            }
+        });
+        
+        // Check if user is already logged in
+        window.addEventListener('load', async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                window.location.href = 'menu.html';
+            }
+        });
+    </script>
+</body>
+</html>
