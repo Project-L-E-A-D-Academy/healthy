@@ -905,7 +905,7 @@
         });
         
         // OpenRouter configuration
-        const OPENROUTER_API_KEY = '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';
+        const OPENROUTER_API_KEY = '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';
         
         let currentUser = null;
         let currentUserStats = null;
@@ -1137,7 +1137,7 @@
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        model: 'deepseek/deepseek-chat-v3-0324',
+                        model: 'deepseek/deepseek-chat-v3-0324:free',
                         messages: [{
                             role: 'system',
                             content: 'You are a compassionate AI therapy assistant for teenagers. Provide supportive, empathetic responses. Focus on active listening, validation, and gentle guidance. Keep responses conversational and age-appropriate. If someone expresses serious mental health concerns, gently suggest they talk to a trusted adult or professional.'
