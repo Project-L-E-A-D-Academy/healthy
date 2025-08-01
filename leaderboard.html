@@ -1,0 +1,726 @@
+import React, { useState, useEffect } from 'react';
+import { Trophy, Medal, Award, Brain, Target, Clock, CheckCircle, XCircle, Users, Star, ArrowRight, Play, Calendar } from 'lucide-react';
+
+// Mock data - replace with actual Supabase data
+const mockMindfulnessData = [
+  { id: 1, name: "Alex Chen", avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face", breathingLevel: 12, totalMinutes: 2340, totalSessions: 89, averageSession: 26.3 },
+  { id: 2, name: "Sarah Kim", avatar: "https://images.unsplash.com/photo-1494790108755-2616b381dea8?w=40&h=40&fit=crop&crop=face", breathingLevel: 11, totalMinutes: 2100, totalSessions: 95, averageSession: 22.1 },
+  { id: 3, name: "Mike Johnson", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=40&h=40&fit=crop&crop=face", breathingLevel: 10, totalMinutes: 1890, totalSessions: 72, averageSession: 26.3 },
+  { id: 4, name: "Emma Davis", avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=40&h=40&fit=crop&crop=face", breathingLevel: 9, totalMinutes: 1650, totalSessions: 68, averageSession: 24.3 },
+  { id: 5, name: "David Wilson", avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=40&h=40&fit=crop&crop=face", breathingLevel: 8, totalMinutes: 1420, totalSessions: 55, averageSession: 25.8 }
+];
+
+const mockNutritionData = [
+  { id: 1, name: "Lisa Rodriguez", avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=40&h=40&fit=crop&crop=face", correctAnswers: 142, wrongAnswers: 28, totalAnswers: 170, accuracy: 83.5 },
+  { id: 2, name: "James Brown", avatar: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=40&h=40&fit=crop&crop=face", correctAnswers: 128, wrongAnswers: 45, totalAnswers: 173, accuracy: 74.0 },
+  { id: 3, name: "Anna Taylor", avatar: "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=40&h=40&fit=crop&crop=face", correctAnswers: 115, wrongAnswers: 32, totalAnswers: 147, accuracy: 78.2 },
+  { id: 4, name: "Chris Lee", avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face", correctAnswers: 98, wrongAnswers: 52, totalAnswers: 150, accuracy: 65.3 },
+  { id: 5, name: "Maya Patel", avatar: "https://images.unsplash.com/photo-1489424731084-a5d8b219a5bb?w=40&h=40&fit=crop&crop=face", correctAnswers: 87, wrongAnswers: 38, totalAnswers: 125, accuracy: 69.6 }
+];
+
+// Sample nutrition questions by grade level
+const sampleQuestions = {
+  elementary: [
+    {
+      question: "Which food group helps build strong bones and teeth?",
+      options: ["Fruits", "Dairy", "Grains", "Vegetables"],
+      correct: 1,
+      explanation: "Dairy products like milk and cheese are rich in calcium, which helps build strong bones and teeth."
+    },
+    {
+      question: "How many food groups are there in a healthy diet?",
+      options: ["3", "4", "5", "6"],
+      correct: 2,
+      explanation: "There are 5 main food groups: fruits, vegetables, grains, protein, and dairy."
+    }
+  ],
+  middle: [
+    {
+      question: "What is the recommended daily intake of water for teenagers?",
+      options: ["4-6 cups", "6-8 cups", "8-10 cups", "10-12 cups"],
+      correct: 2,
+      explanation: "Teenagers should drink 8-10 cups of water daily to stay properly hydrated."
+    },
+    {
+      question: "Which nutrient is the body's main source of energy?",
+      options: ["Protein", "Fat", "Carbohydrates", "Vitamins"],
+      correct: 2,
+      explanation: "Carbohydrates are the body's preferred source of energy for daily activities."
+    }
+  ],
+  high: [
+    {
+      question: "What is the difference between saturated and unsaturated fats?",
+      options: [
+        "Saturated fats are liquid at room temperature",
+        "Unsaturated fats are solid at room temperature", 
+        "Saturated fats are solid at room temperature",
+        "There is no difference"
+      ],
+      correct: 2,
+      explanation: "Saturated fats are typically solid at room temperature (like butter), while unsaturated fats are liquid (like olive oil)."
+    }
+  ]
+};
+
+const LeaderboardSystem = () => {
+  const [activeView, setActiveView] = useState('mindfulness');
+  const [activeMindfulnessTab, setActiveMindfulnessTab] = useState('breathing');
+  const [activeNutritionTab, setActiveNutritionTab] = useState('correct');
+  const [showQuiz, setShowQuiz] = useState(false);
+  const [currentQuestion, setCurrentQuestion] = useState(0);
+  const [selectedAnswer, setSelectedAnswer] = useState(null);
+  const [showResult, setShowResult] = useState(false);
+  const [score, setScore] = useState(0);
+  const [userGrade, setUserGrade] = useState('middle');
+  const [quizQuestions, setQuizQuestions] = useState([]);
+  const [isGeneratingQuiz, setIsGeneratingQuiz] = useState(false);
+  
+  // Anti-cheat states
+  const [isScreenBlocked, setIsScreenBlocked] = useState(false);
+  const [suspiciousActivity, setSuspiciousActivity] = useState(0);
+  const [quizStartTime, setQuizStartTime] = useState(null);
+  const [tabSwitchCount, setTabSwitchCount] = useState(0);
+  const [isWindowFocused, setIsWindowFocused] = useState(true);
+
+  // Anti-cheat detection and prevention
+  useEffect(() => {
+    if (!showQuiz) return;
+
+    let screenCaptureTimeout;
+    
+    // Handle suspicious activity
+    const handleSuspiciousActivity = () => {
+      setIsScreenBlocked(true);
+      setSuspiciousActivity(prev => prev + 1);
+      
+      // Auto-unblock after 3 seconds as a warning
+      screenCaptureTimeout = setTimeout(() => {
+        setIsScreenBlocked(false);
+      }, 3000);
+    };
+
+    // Disable right-click during quiz
+    const handleContextMenu = (e) => {
+      e.preventDefault();
+      handleSuspiciousActivity();
+      return false;
+    };
+
+    // Disable keyboard shortcuts
+    const handleKeyDown = (e) => {
+      // Disable F12, Ctrl+Shift+I, Ctrl+U, Ctrl+S, Print Screen, etc.
+      if (
+        e.keyCode === 123 || // F12
+        (e.ctrlKey && e.shiftKey && e.keyCode === 73) || // Ctrl+Shift+I
+        (e.ctrlKey && e.keyCode === 85) || // Ctrl+U
+        (e.ctrlKey && e.keyCode === 83) || // Ctrl+S
+        e.keyCode === 44 || // Print Screen
+        (e.ctrlKey && e.keyCode === 80) || // Ctrl+P
+        (e.altKey && e.keyCode === 115) || // Alt+F4
+        (e.ctrlKey && e.keyCode === 82) // Ctrl+R
+      ) {
+        e.preventDefault();
+        handleSuspiciousActivity();
+        return false;
+      }
+    };
+
+    // Detect tab switching/window focus changes
+    const handleVisibilityChange = () => {
+      if (document.hidden && showQuiz) {
+        setTabSwitchCount(prev => prev + 1);
+        handleSuspiciousActivity();
+      }
+    };
+
+    const handleWindowFocus = () => {
+      setIsWindowFocused(true);
+    };
+
+    const handleWindowBlur = () => {
+      if (showQuiz) {
+        setIsWindowFocused(false);
+        setTabSwitchCount(prev => prev + 1);
+        handleSuspiciousActivity();
+      }
+    };
+
+    // Check for mobile screenshot gestures (volume + power button)
+    const handleTouchStart = (e) => {
+      if (e.touches.length > 1) {
+        handleSuspiciousActivity();
+      }
+    };
+
+    // Dev tools detection
+    const detectDevTools = () => {
+      setInterval(() => {
+        if (window.outerHeight - window.innerHeight > 200 || window.outerWidth - window.innerWidth > 200) {
+          handleSuspiciousActivity();
+        }
+      }, 1000);
+    };
+
+    // Add event listeners
+    document.addEventListener('contextmenu', handleContextMenu);
+    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleWindowFocus);
+    window.addEventListener('blur', handleWindowBlur);
+    document.addEventListener('touchstart', handleTouchStart);
+    
+    // Start detections
+    detectDevTools();
+    setQuizStartTime(new Date().getTime());
+
+    // Cleanup
+    return () => {
+      document.removeEventListener('contextmenu', handleContextMenu);
+      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleWindowFocus);
+      window.removeEventListener('blur', handleWindowBlur);
+      document.removeEventListener('touchstart', handleTouchStart);
+      
+      if (screenCaptureTimeout) clearTimeout(screenCaptureTimeout);
+    };
+  }, [showQuiz]);
+
+  const getRankIcon = (rank) => {
+    switch(rank) {
+      case 1: return <Trophy className="w-6 h-6 text-yellow-500" />;
+      case 2: return <Medal className="w-6 h-6 text-gray-400" />;
+      case 3: return <Award className="w-6 h-6 text-amber-600" />;
+      default: return <div className="w-6 h-6 bg-slate-300 rounded-full flex items-center justify-center text-xs font-bold text-slate-600">{rank}</div>;
+    }
+  };
+
+  const getRankBg = (rank) => {
+    switch(rank) {
+      case 1: return 'bg-gradient-to-r from-yellow-50 to-yellow-100 border-yellow-200';
+      case 2: return 'bg-gradient-to-r from-gray-50 to-gray-100 border-gray-200';
+      case 3: return 'bg-gradient-to-r from-amber-50 to-amber-100 border-amber-200';
+      default: return 'bg-white border-slate-200';
+    }
+  };
+
+  // Reset anti-cheat states when quiz ends
+  const resetAntiCheatStates = () => {
+    setSuspiciousActivity(0);
+    setTabSwitchCount(0);
+    setIsScreenBlocked(false);
+    setQuizStartTime(null);
+    setIsWindowFocused(true);
+  };
+
+  // Generate AI-powered quiz questions (mock implementation)
+  const generateQuizQuestions = async () => {
+    setIsGeneratingQuiz(true);
+    
+    // Simulate API call to Gemini
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    // Use sample questions based on grade level
+    const gradeQuestions = sampleQuestions[userGrade] || sampleQuestions.middle;
+    const shuffled = [...gradeQuestions].sort(() => Math.random() - 0.5);
+    setQuizQuestions(shuffled.slice(0, 5));
+    setIsGeneratingQuiz(false);
+  };
+
+  const startQuiz = () => {
+    setShowQuiz(true);
+    setCurrentQuestion(0);
+    setScore(0);
+    setSelectedAnswer(null);
+    setShowResult(false);
+    resetAntiCheatStates();
+    generateQuizQuestions();
+  };
+
+  const handleAnswerSelect = (answerIndex) => {
+    setSelectedAnswer(answerIndex);
+  };
+
+  const handleNextQuestion = () => {
+    if (selectedAnswer === quizQuestions[currentQuestion]?.correct) {
+      setScore(score + 1);
+    }
+
+    if (currentQuestion < quizQuestions.length - 1) {
+      setCurrentQuestion(currentQuestion + 1);
+      setSelectedAnswer(null);
+    } else {
+      setShowResult(true);
+    }
+  };
+
+  const resetQuiz = () => {
+    setShowQuiz(false);
+    setCurrentQuestion(0);
+    setSelectedAnswer(null);
+    setShowResult(false);
+    setScore(0);
+    setQuizQuestions([]);
+    resetAntiCheatStates();
+  };
+
+  const renderMindfulnessLeaderboard = () => {
+    const sortedByBreathing = [...mockMindfulnessData].sort((a, b) => b.breathingLevel - a.breathingLevel);
+    const sortedByAverage = [...mockMindfulnessData].sort((a, b) => b.averageSession - a.averageSession);
+    
+    const currentData = activeMindfulnessTab === 'breathing' ? sortedByBreathing : sortedByAverage;
+    const title = activeMindfulnessTab === 'breathing' ? 'Breathing Level' : 'Average Session';
+    const icon = activeMindfulnessTab === 'breathing' ? <Brain className="w-5 h-5" /> : <Clock className="w-5 h-5" />;
+
+    return (
+      <div className="space-y-6">
+        <div className="flex space-x-1 bg-slate-100 p-1 rounded-lg">
+          <button
+            onClick={() => setActiveMindfulnessTab('breathing')}
+            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+              activeMindfulnessTab === 'breathing' 
+                ? 'bg-white text-blue-600 shadow-sm' 
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <Brain className="w-4 h-4 inline mr-2" />
+            Breathing Level
+          </button>
+          <button
+            onClick={() => setActiveMindfulnessTab('average')}
+            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+              activeMindfulnessTab === 'average' 
+                ? 'bg-white text-blue-600 shadow-sm' 
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <Clock className="w-4 h-4 inline mr-2" />
+            Average Session
+          </button>
+        </div>
+
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200">
+          <div className="p-6 border-b border-slate-200">
+            <div className="flex items-center space-x-2">
+              {icon}
+              <h3 className="text-lg font-semibold text-slate-900">Top {title} Masters</h3>
+            </div>
+          </div>
+          
+          <div className="p-6">
+            <div className="space-y-4">
+              {currentData.slice(0, 5).map((user, index) => (
+                <div key={user.id} className={`flex items-center justify-between p-4 rounded-lg border-2 ${getRankBg(index + 1)}`}>
+                  <div className="flex items-center space-x-4">
+                    {getRankIcon(index + 1)}
+                    <img 
+                      src={user.avatar} 
+                      alt={user.name}
+                      className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-sm"
+                    />
+                    <div>
+                      <h4 className="font-semibold text-slate-900">{user.name}</h4>
+                      <div className="flex items-center space-x-4 text-sm text-slate-600">
+                        <span className="flex items-center">
+                          <Calendar className="w-4 h-4 mr-1" />
+                          {user.totalSessions} sessions
+                        </span>
+                        <span className="flex items-center">
+                          <Clock className="w-4 h-4 mr-1" />
+                          {user.totalMinutes} min
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="text-right">
+                    <div className="text-2xl font-bold text-slate-900">
+                      {activeMindfulnessTab === 'breathing' ? user.breathingLevel : `${user.averageSession}m`}
+                    </div>
+                    <div className="text-sm text-slate-500">
+                      {activeMindfulnessTab === 'breathing' ? 'Level' : 'avg/session'}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderNutritionLeaderboard = () => {
+    const sortedByCorrect = [...mockNutritionData].sort((a, b) => b.correctAnswers - a.correctAnswers);
+    const sortedByWrong = [...mockNutritionData].sort((a, b) => b.wrongAnswers - a.wrongAnswers);
+    const sortedByTotal = [...mockNutritionData].sort((a, b) => b.totalAnswers - a.totalAnswers);
+    
+    let currentData, title, icon, valueKey, valueLabel;
+    
+    switch(activeNutritionTab) {
+      case 'correct':
+        currentData = sortedByCorrect;
+        title = 'Most Correct Answers';
+        icon = <CheckCircle className="w-5 h-5 text-green-600" />;
+        valueKey = 'correctAnswers';
+        valueLabel = 'correct';
+        break;
+      case 'wrong':
+        currentData = sortedByWrong;
+        title = 'Most Wrong Answers';
+        icon = <XCircle className="w-5 h-5 text-red-600" />;
+        valueKey = 'wrongAnswers';
+        valueLabel = 'wrong';
+        break;
+      case 'total':
+        currentData = sortedByTotal;
+        title = 'Most Active Learners';
+        icon = <Users className="w-5 h-5 text-blue-600" />;
+        valueKey = 'totalAnswers';
+        valueLabel = 'total';
+        break;
+    }
+
+    return (
+      <div className="space-y-6">
+        <div className="flex space-x-1 bg-slate-100 p-1 rounded-lg">
+          <button
+            onClick={() => setActiveNutritionTab('correct')}
+            className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors ${
+              activeNutritionTab === 'correct' 
+                ? 'bg-white text-green-600 shadow-sm' 
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <CheckCircle className="w-4 h-4 inline mr-1" />
+            Most Correct
+          </button>
+          <button
+            onClick={() => setActiveNutritionTab('wrong')}
+            className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors ${
+              activeNutritionTab === 'wrong' 
+                ? 'bg-white text-red-600 shadow-sm' 
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <XCircle className="w-4 h-4 inline mr-1" />
+            Most Wrong
+          </button>
+          <button
+            onClick={() => setActiveNutritionTab('total')}
+            className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors ${
+              activeNutritionTab === 'total' 
+                ? 'bg-white text-blue-600 shadow-sm' 
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <Users className="w-4 h-4 inline mr-1" />
+            Most Active
+          </button>
+        </div>
+
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200">
+          <div className="p-6 border-b border-slate-200 flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              {icon}
+              <h3 className="text-lg font-semibold text-slate-900">{title}</h3>
+            </div>
+            <button
+              onClick={startQuiz}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center space-x-2"
+            >
+              <Play className="w-4 h-4" />
+              <span>Take Quiz</span>
+            </button>
+          </div>
+          
+          <div className="p-6">
+            <div className="space-y-4">
+              {currentData.slice(0, 5).map((user, index) => (
+                <div key={user.id} className={`flex items-center justify-between p-4 rounded-lg border-2 ${getRankBg(index + 1)}`}>
+                  <div className="flex items-center space-x-4">
+                    {getRankIcon(index + 1)}
+                    <img 
+                      src={user.avatar} 
+                      alt={user.name}
+                      className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-sm"
+                    />
+                    <div>
+                      <h4 className="font-semibold text-slate-900">{user.name}</h4>
+                      <div className="flex items-center space-x-4 text-sm text-slate-600">
+                        <span className="text-green-600">✓ {user.correctAnswers}</span>
+                        <span className="text-red-600">✗ {user.wrongAnswers}</span>
+                        <span className="text-blue-600">{user.accuracy}% accuracy</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="text-right">
+                    <div className="text-2xl font-bold text-slate-900">
+                      {user[valueKey]}
+                    </div>
+                    <div className="text-sm text-slate-500">
+                      {valueLabel}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderQuiz = () => {
+    if (isGeneratingQuiz) {
+      return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-8 max-w-md w-full mx-4">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <h3 className="text-lg font-semibold text-slate-900 mb-2">Generating Your Quiz</h3>
+              <p className="text-slate-600">AI is creating personalized questions for your grade level...</p>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Anti-cheat screen blocker
+    if (isScreenBlocked) {
+      return (
+        <div className="fixed inset-0 bg-black flex items-center justify-center z-50">
+          <div className="text-center text-white p-8">
+            <div className="text-6xl mb-4">⚠️</div>
+            <h2 className="text-3xl font-bold mb-4">SUSPICIOUS ACTIVITY DETECTED</h2>
+            <p className="text-xl mb-2">Screen capture or unauthorized access attempt detected!</p>
+            <p className="text-lg opacity-80">Quiz will resume automatically...</p>
+            <div className="mt-6">
+              <div className="text-red-400 text-sm">
+                • Tab switches: {tabSwitchCount}
+                • Suspicious actions: {suspiciousActivity}
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    if (showResult) {
+      // Calculate quiz integrity score
+      const totalTime = quizStartTime ? (new Date().getTime() - quizStartTime) / 1000 : 0;
+      const avgTimePerQuestion = totalTime / quizQuestions.length;
+      const integrityScore = Math.max(0, 100 - (suspiciousActivity * 10) - (tabSwitchCount * 15));
+      const isValidScore = integrityScore >= 50 && avgTimePerQuestion >= 10;
+      
+      return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-8 max-w-md w-full mx-4">
+            <div className="text-center">
+              <Star className="w-16 h-16 text-yellow-500 mx-auto mb-4" />
+              <h3 className="text-2xl font-bold text-slate-900 mb-2">Quiz Complete!</h3>
+              <div className="text-4xl font-bold text-blue-600 mb-2">{score}/{quizQuestions.length}</div>
+              <p className="text-slate-600 mb-4">
+                You got {score} out of {quizQuestions.length} questions correct!
+              </p>
+              
+              <div className={`p-4 rounded-lg mb-4 ${isValidScore ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
+                <div className="flex items-center justify-center space-x-2 mb-2">
+                  <div className={`w-3 h-3 rounded-full ${isValidScore ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                  <span className={`font-semibold ${isValidScore ? 'text-green-700' : 'text-red-700'}`}>
+                    Integrity Score: {integrityScore}%
+                  </span>
+                </div>
+                <div className="text-sm text-slate-600">
+                  <div>Time: {Math.round(totalTime)}s ({Math.round(avgTimePerQuestion)}s/question)</div>
+                  <div>Tab switches: {tabSwitchCount}</div>
+                  <div>Suspicious actions: {suspiciousActivity}</div>
+                </div>
+                {!isValidScore && (
+                  <div className="text-red-600 text-sm mt-2 font-medium">
+                    ⚠️ Score not eligible for leaderboard due to low integrity
+                  </div>
+                )}
+              </div>
+              
+              <div className="flex space-x-3">
+                <button
+                  onClick={startQuiz}
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-medium transition-colors"
+                >
+                  Try Again
+                </button>
+                <button
+                  onClick={resetQuiz}
+                  className="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-700 py-3 px-4 rounded-lg font-medium transition-colors"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    if (!quizQuestions.length) return null;
+
+    const question = quizQuestions[currentQuestion];
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div 
+          className="bg-white rounded-xl p-8 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto select-none"
+          style={{ 
+            userSelect: 'none',
+            WebkitUserSelect: 'none',
+            MozUserSelect: 'none',
+            msUserSelect: 'none'
+          }}
+          onDragStart={(e) => e.preventDefault()}
+        >
+          <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-6">
+            <div className="flex items-center justify-between text-sm">
+              <div className="flex items-center space-x-2">
+                <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                <span className="text-red-700 font-medium">Anti-Cheat Active</span>
+              </div>
+              <div className="text-red-600">
+                Focus: {isWindowFocused ? '✓' : '✗'} | Switches: {tabSwitchCount}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center space-x-2">
+              <Brain className="w-6 h-6 text-blue-600" />
+              <span className="font-semibold text-slate-900">Nutrition Quiz</span>
+            </div>
+            <div className="flex items-center space-x-4">
+              <span className="text-sm text-slate-600">
+                {currentQuestion + 1} of {quizQuestions.length}
+              </span>
+              <button
+                onClick={resetQuiz}
+                className="text-slate-400 hover:text-slate-600"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+
+          <div className="mb-8">
+            <div className="w-full bg-slate-200 rounded-full h-2 mb-6">
+              <div 
+                className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                style={{ width: `${((currentQuestion + 1) / quizQuestions.length) * 100}%` }}
+              ></div>
+            </div>
+
+            <h3 className="text-xl font-semibold text-slate-900 mb-6">
+              {question.question}
+            </h3>
+
+            <div className="space-y-3">
+              {question.options.map((option, index) => (
+                <button
+                  key={index}
+                  onClick={() => handleAnswerSelect(index)}
+                  className={`w-full p-4 text-left rounded-lg border-2 transition-colors ${
+                    selectedAnswer === index
+                      ? 'border-blue-500 bg-blue-50 text-blue-700'
+                      : 'border-slate-200 hover:border-slate-300 text-slate-700'
+                  }`}
+                  style={{ 
+                    userSelect: 'none',
+                    WebkitUserSelect: 'none'
+                  }}
+                >
+                  <div className="flex items-center space-x-3">
+                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+                      selectedAnswer === index
+                        ? 'border-blue-500 bg-blue-500 text-white'
+                        : 'border-slate-300'
+                    }`}>
+                      {selectedAnswer === index && '✓'}
+                    </div>
+                    <span>{option}</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex justify-between">
+            <button
+              onClick={resetQuiz}
+              className="px-6 py-3 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleNextQuestion}
+              disabled={selectedAnswer === null}
+              className={`px-6 py-3 rounded-lg font-medium transition-colors flex items-center space-x-2 ${
+                selectedAnswer !== null
+                  ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                  : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+              }`}
+            >
+              <span>{currentQuestion === quizQuestions.length - 1 ? 'Finish' : 'Next'}</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-4">
+      <div className="max-w-6xl mx-auto">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold text-slate-900 mb-2">Community Leaderboards</h1>
+          <p className="text-lg text-slate-600">Compete with fellow learners and track your progress</p>
+        </div>
+
+        {/* Main Navigation */}
+        <div className="flex justify-center mb-8">
+          <div className="flex space-x-1 bg-slate-100 p-1 rounded-lg">
+            <button
+              onClick={() => setActiveView('mindfulness')}
+              className={`py-3 px-6 rounded-md font-medium transition-colors ${
+                activeView === 'mindfulness' 
+                  ? 'bg-white text-blue-600 shadow-sm' 
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              🧘‍♀️ Monk-ness LeaderBoard
+            </button>
+            <button
+              onClick={() => setActiveView('nutrition')}
+              className={`py-3 px-6 rounded-md font-medium transition-colors ${
+                activeView === 'nutrition' 
+                  ? 'bg-white text-green-600 shadow-sm' 
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              🥗 Nutri Board
+            </button>
+          </div>
+        </div>
+
+        {/* Leaderboard Content */}
+        {activeView === 'mindfulness' ? renderMindfulnessLeaderboard() : renderNutritionLeaderboard()}
+
+        {/* Quiz Modal */}
+        {showQuiz && renderQuiz()}
+      </div>
+    </div>
+  );
+};
+
+export default LeaderboardSystem;
