@@ -375,6 +375,28 @@
             font-size: 12px;
         }
 
+        .api-status {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 10px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            z-index: 100;
+        }
+
+        .api-status.connected {
+            background: #bbf7d0;
+            color: #065f46;
+        }
+
+        .api-status.disconnected {
+            background: #fecaca;
+            color: #991b1b;
+        }
+
         @media (max-width: 768px) {
             .nutrition-grid {
                 grid-template-columns: 1fr;
@@ -524,6 +546,11 @@
         </div>
     </div>
 
+    <!-- API Status Indicator -->
+    <div class="api-status disconnected" id="apiStatus">
+        AI Service: Disconnected
+    </div>
+
     <script>
         // Supabase configuration
         const SUPABASE_URL = 'https://fhthwxgkxuontprzclhb.supabase.co';
@@ -531,11 +558,14 @@
         
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         
+        // IMPORTANT: In a production environment, you should NEVER expose API keys in client-side code
+        // This should be handled through a backend service. This is for demonstration only.
         const OPENAI_API_KEY = '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';
         const OPENAI_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
         
         let currentUser = null;
         let currentDietPreference = 'All';
+        let apiConnected = false;
 
         // Check authentication and load user data
         async function checkAuth() {
@@ -550,6 +580,53 @@
             await loadUserProfile();
             await loadMeals();
             await loadStats();
+            
+            // Verify API connection after auth
+            await verifyApiConnection();
+        }
+
+        // Verify API connection
+        async function verifyApiConnection() {
+            const statusElement = document.getElementById('apiStatus');
+            
+            try {
+                // Simple test request to verify API key
+                const response = await fetch(OPENAI_API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${OPENAI_API_KEY}`,
+                        'HTTP-Referer': window.location.href,
+                        'X-Title': 'LEAD Wellness App'
+                    },
+                    body: JSON.stringify({
+                        model: 'meta-llama/llama-3.1-8b-instruct:free',
+                        messages: [{ role: 'user', content: 'Hello' }],
+                        max_tokens: 5
+                    })
+                });
+                
+                if (response.ok) {
+                    apiConnected = true;
+                    statusElement.textContent = 'AI Service: Connected';
+                    statusElement.classList.remove('disconnected');
+                    statusElement.classList.add('connected');
+                } else {
+                    apiConnected = false;
+                    statusElement.textContent = 'AI Service: Disconnected (Check API Key)';
+                    statusElement.classList.remove('connected');
+                    statusElement.classList.add('disconnected');
+                    
+                    const errorData = await response.json();
+                    console.error('API Connection Error:', errorData);
+                }
+            } catch (error) {
+                apiConnected = false;
+                statusElement.textContent = 'AI Service: Connection Failed';
+                statusElement.classList.remove('connected');
+                statusElement.classList.add('disconnected');
+                console.error('API Connection Error:', error);
+            }
         }
 
         // Load user profile and dietary preference
@@ -625,7 +702,7 @@
                 // Calculate streak (simplified - count consecutive days with meals)
                 const uniqueDays = [...new Set(meals.map(meal => 
                     new Date(meal.logged_at).toDateString()
-                ))].length;
+                )].length;
                 document.getElementById('streakDays').textContent = uniqueDays;
             }
         }
@@ -728,6 +805,11 @@
 
         // AI Food Coach Functions
         async function sendCoachMessage() {
+            if (!apiConnected) {
+                alert('AI service is currently unavailable. Please check your API key or try again later.');
+                return;
+            }
+            
             const input = document.getElementById('coachChatInput');
             const message = input.value.trim();
             
@@ -765,15 +847,12 @@
                     ? `Recent meals: ${recentMeals.map(m => `${m.meal_name} (${m.meal_type}, ${m.calories || 'unknown'} calories)`).join(', ')}`
                     : 'No recent meals logged';
                 
-                console.log('Sending request to OpenRouter...');
-                console.log('API Key (first 10 chars):', OPENAI_API_KEY.substring(0, 10) + '...');
-                
                 const response = await fetch(OPENAI_API_URL, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${OPENAI_API_KEY}`,
-                        'HTTP-Referer': 'https://project-l-e-a-d-academy.github.io',
+                        'HTTP-Referer': window.location.href,
                         'X-Title': 'LEAD Wellness App'
                     },
                     body: JSON.stringify({
@@ -790,24 +869,21 @@
                     })
                 });
                 
-                console.log('Response status:', response.status);
-                console.log('Response headers:', response.headers);
-                
                 const data = await response.json();
-                console.log('Full API response:', data);
                 
                 // Remove loading message
                 const loading = document.getElementById('loadingMessage');
                 if (loading) loading.remove();
                 
-                // Better error handling
                 if (!response.ok) {
                     console.error('API Error Details:', data);
                     
                     let errorMsg = 'I apologize, but I\'m having trouble connecting to my AI service right now. ';
                     
                     if (response.status === 401) {
-                        errorMsg += 'This appears to be an authentication issue. Please check that the API key is valid and has sufficient credits.';
+                        errorMsg += 'This appears to be an authentication issue. Please check that the API key is valid.';
+                        apiConnected = false;
+                        document.getElementById('apiStatus').textContent = 'AI Service: Invalid API Key';
                     } else if (response.status === 429) {
                         errorMsg += 'Too many requests. Please wait a moment and try again.';
                     } else if (response.status === 400) {
