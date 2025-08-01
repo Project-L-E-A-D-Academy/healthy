@@ -18,7 +18,6 @@
             min-height: 100vh;
         }
 
-        /* Loading Screen */
         .loading-screen {
             position: fixed;
             top: 0;
@@ -72,7 +71,6 @@
             }
         }
 
-        /* Header */
         .header {
             background: rgba(255, 255, 255, 0.15);
             backdrop-filter: blur(10px);
@@ -107,7 +105,6 @@
             transform: translateY(-2px);
         }
 
-        /* Main Content */
         .main-content {
             opacity: 0;
             transition: opacity 0.5s ease-in;
@@ -223,7 +220,6 @@
             background: #7c3aed;
         }
 
-        /* Modal Styles */
         .modal {
             display: none;
             position: fixed;
@@ -412,23 +408,6 @@
             to { opacity: 1; }
         }
 
-        @media (max-width: 768px) {
-            .activities-grid {
-                grid-template-columns: 1fr;
-                gap: 20px;
-            }
-            
-            .stats-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-            
-            .breathing-circle {
-                width: 150px;
-                height: 150px;
-            }
-        }
-
-        /* Progress bar styles */
         .xp-progress {
             width: 100%;
             height: 10px;
@@ -443,6 +422,22 @@
             background-color: #8b5cf6;
             border-radius: 5px;
             transition: width 0.3s ease;
+        }
+
+        @media (max-width: 768px) {
+            .activities-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .breathing-circle {
+                width: 150px;
+                height: 150px;
+            }
         }
     </style>
 </head>
@@ -694,7 +689,16 @@
         
         // OpenRouter configuration
         const OPENROUTER_API_KEY = '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';
-        const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
+        const OPENROUTER_CONFIG = {
+            url: 'https://openrouter.ai/api/v1/chat/completions',
+            model: 'openai/gpt-3.5-turbo',
+            headers: {
+                'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+                'HTTP-Referer': 'https://project-l-e-a-d-academy.github.io',
+                'X-Title': 'LEAD Wellness App',
+                'Content-Type': 'application/json'
+            }
+        };
         
         let currentUser = null;
         let breathingTimer = null;
@@ -728,14 +732,15 @@
                     .from('user_stats')
                     .select('*')
                     .eq('user_id', currentUser.id)
-                    .single();
+                    .maybeSingle();
                 
-                if (error) {
-                    console.error('Error loading stats:', error);
+                if (error) throw error;
+                
+                if (!stats) {
                     // Initialize stats if they don't exist
-                    const { error: initError } = await supabase
+                    const { data: newStats, error: initError } = await supabase
                         .from('user_stats')
-                        .insert([{
+                        .insert({
                             user_id: currentUser.id,
                             breathing_streak: 0,
                             breathing_level: 1,
@@ -743,24 +748,15 @@
                             total_breathing_xp: 0,
                             total_breathing_sessions: 0,
                             total_meditation_sessions: 0
-                        }]);
+                        })
+                        .select()
+                        .single();
                     
                     if (initError) throw initError;
-                    return await loadUserStats(); // Reload after initialization
+                    return updateUIWithStats(newStats);
                 }
                 
-                if (stats) {
-                    document.getElementById('breathingStreak').textContent = stats.breathing_streak || 0;
-                    document.getElementById('breathingLevel').textContent = stats.breathing_level || 1;
-                    document.getElementById('totalSessions').textContent = 
-                        (stats.total_breathing_sessions || 0) + (stats.total_meditation_sessions || 0);
-                    
-                    currentXp = stats.breathing_xp || 0;
-                    nextLevelXp = 100 + ((stats.breathing_level || 1) - 1) * 50;
-                    
-                    // Update progress bars
-                    updateXpProgress(currentXp, nextLevelXp);
-                }
+                updateUIWithStats(stats);
                 
                 // Calculate total minutes from sessions
                 const { data: breathingSessions } = await supabase
@@ -784,7 +780,17 @@
             }
         }
 
-        // Update XP progress bars
+        function updateUIWithStats(stats) {
+            document.getElementById('breathingStreak').textContent = stats.breathing_streak || 0;
+            document.getElementById('breathingLevel').textContent = stats.breathing_level || 1;
+            document.getElementById('totalSessions').textContent = 
+                (stats.total_breathing_sessions || 0) + (stats.total_meditation_sessions || 0);
+            
+            currentXp = stats.breathing_xp || 0;
+            nextLevelXp = 100 + ((stats.breathing_level || 1) - 1) * 50;
+            updateXpProgress(currentXp, nextLevelXp);
+        }
+
         function updateXpProgress(current, needed) {
             const percentage = Math.min(100, (current / needed) * 100);
             document.getElementById('xpProgressBar').style.width = `${percentage}%`;
@@ -856,16 +862,11 @@
             chatContainer.scrollTop = chatContainer.scrollHeight;
             
             try {
-                const response = await fetch(OPENROUTER_API_URL, {
+                const response = await fetch(OPENROUTER_CONFIG.url, {
                     method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
-                        'HTTP-Referer': 'https://project-l-e-a-d-academy.github.io',
-                        'X-Title': 'LEAD Wellness App',
-                        'Content-Type': 'application/json'
-                    },
+                    headers: OPENROUTER_CONFIG.headers,
                     body: JSON.stringify({
-                        model: 'openai/gpt-3.5-turbo',
+                        model: OPENROUTER_CONFIG.model,
                         messages: [{
                             role: 'system',
                             content: 'You are a compassionate AI therapy assistant for teenagers. Provide supportive, empathetic responses. Focus on active listening, validation, and gentle guidance. Keep responses conversational and age-appropriate. If someone expresses serious mental health concerns, gently suggest they talk to a trusted adult or professional.'
@@ -1031,7 +1032,7 @@
                     .select('*')
                     .eq('user_id', user.id)
                     .single();
-                
+                    
                 const today = new Date().toISOString().split('T')[0];
                 const lastSession = currentStats?.last_breathing_session;
                 const isConsecutive = lastSession && 
@@ -1042,29 +1043,25 @@
                 const currentLevel = currentStats?.breathing_level || 1;
                 const currentXp = currentStats?.breathing_xp || 0;
                 const totalXp = currentXp + xpEarned;
-                
-                // Level up formula (100 XP for level 1, +50 XP needed for each subsequent level)
                 const xpNeeded = 100 + (currentLevel - 1) * 50;
                 const levelsGained = totalXp >= xpNeeded ? Math.floor((totalXp - currentXp) / xpNeeded) : 0;
                 const newLevel = currentLevel + levelsGained;
                 
                 // Save breathing session
-                const { data: session, error: sessionError } = await supabase
+                const { error: sessionError } = await supabase
                     .from('breathing_sessions')
-                    .insert([{
+                    .insert({
                         user_id: user.id,
                         session_type: 'breathing',
                         duration: duration,
                         level: newLevel,
                         xp_earned: xpEarned
-                    }])
-                    .select()
-                    .single();
+                    });
                     
                 if (sessionError) throw sessionError;
                 
                 // Update user stats
-                const { data: stats, error: statsError } = await supabase
+                const { error: statsError } = await supabase
                     .from('user_stats')
                     .upsert({
                         user_id: user.id,
@@ -1075,9 +1072,7 @@
                         breathing_xp: totalXp % xpNeeded,
                         total_breathing_xp: (currentStats?.total_breathing_xp || 0) + xpEarned,
                         updated_at: new Date().toISOString()
-                    })
-                    .select()
-                    .single();
+                    });
                     
                 if (statsError) throw statsError;
                 
