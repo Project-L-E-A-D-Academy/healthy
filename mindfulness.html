@@ -555,6 +555,8 @@
                 
                 <div style="margin-top: 20px;">
                     <p>Duration: <span id="breathingDuration">00:00</span></p>
+                    <p>XP Earned: <span id="breathingXp">0</span></p>
+                    <p>Next Level: <span id="nextLevelXp">100</span> XP</p>
                 </div>
             </div>
         </div>
@@ -666,12 +668,14 @@
         let breathingTimer = null;
         let breathingStartTime = null;
         let breathingDurationInterval = null;
+        let currentXp = 0;
+        let nextLevelXp = 100;
 
         // Check authentication and load user data
         async function checkAuth() {
-            const { data: { user } } = await supabase.auth.getUser();
+            const { data: { user }, error } = await supabase.auth.getUser();
             
-            if (!user) {
+            if (error || !user) {
                 window.location.href = 'index.html';
                 return;
             }
@@ -682,36 +686,64 @@
 
         // Load user statistics
         async function loadUserStats() {
-            const { data: stats } = await supabase
-                .from('user_stats')
-                .select('*')
-                .eq('user_id', currentUser.id)
-                .single();
-            
-            if (stats) {
-                document.getElementById('breathingStreak').textContent = stats.breathing_streak || 0;
-                document.getElementById('breathingLevel').textContent = stats.breathing_level || 1;
-                document.getElementById('totalSessions').textContent = 
-                    (stats.total_breathing_sessions || 0) + (stats.total_meditation_sessions || 0);
+            try {
+                const { data: stats, error } = await supabase
+                    .from('user_stats')
+                    .select('*')
+                    .eq('user_id', currentUser.id)
+                    .single();
+                
+                if (error) throw error;
+                
+                if (stats) {
+                    document.getElementById('breathingStreak').textContent = stats.breathing_streak || 0;
+                    document.getElementById('breathingLevel').textContent = stats.breathing_level || 1;
+                    document.getElementById('totalSessions').textContent = 
+                        (stats.total_breathing_sessions || 0) + (stats.total_meditation_sessions || 0);
+                    
+                    currentXp = stats.breathing_xp || 0;
+                    nextLevelXp = 100 + ((stats.breathing_level || 1) - 1) * 50;
+                    document.getElementById('breathingXp').textContent = currentXp;
+                    document.getElementById('nextLevelXp').textContent = nextLevelXp;
+                } else {
+                    // Initialize stats if they don't exist
+                    const { error: initError } = await supabase
+                        .from('user_stats')
+                        .insert([{
+                            user_id: currentUser.id,
+                            breathing_streak: 0,
+                            breathing_level: 1,
+                            breathing_xp: 0,
+                            total_breathing_xp: 0,
+                            total_breathing_sessions: 0,
+                            total_meditation_sessions: 0
+                        }]);
+                    
+                    if (initError) throw initError;
+                    await loadUserStats(); // Reload after initialization
+                    return;
+                }
+                
+                // Calculate total minutes from sessions
+                const { data: breathingSessions } = await supabase
+                    .from('breathing_sessions')
+                    .select('duration')
+                    .eq('user_id', currentUser.id);
+                
+                const { data: meditationSessions } = await supabase
+                    .from('meditation_sessions')
+                    .select('duration')
+                    .eq('user_id', currentUser.id);
+                
+                const totalMinutes = Math.floor(
+                    ((breathingSessions || []).reduce((sum, session) => sum + session.duration, 0) +
+                    (meditationSessions || []).reduce((sum, session) => sum + session.duration, 0)) / 60
+                );
+                
+                document.getElementById('totalMinutes').textContent = totalMinutes;
+            } catch (error) {
+                console.error('Error loading user stats:', error);
             }
-            
-            // Calculate total minutes from sessions
-            const { data: breathingSessions } = await supabase
-                .from('breathing_sessions')
-                .select('duration')
-                .eq('user_id', currentUser.id);
-            
-            const { data: meditationSessions } = await supabase
-                .from('meditation_sessions')
-                .select('duration')
-                .eq('user_id', currentUser.id);
-            
-            const totalMinutes = Math.floor(
-                ((breathingSessions || []).reduce((sum, session) => sum + session.duration, 0) +
-                (meditationSessions || []).reduce((sum, session) => sum + session.duration, 0)) / 60
-            );
-            
-            document.getElementById('totalMinutes').textContent = totalMinutes;
         }
 
         // Show loading screen and then main content
@@ -782,7 +814,7 @@
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${OPENAI_API_KEY}`,
-                        'HTTP-Referer': 'https://lead-wellness-app.com',
+                        'HTTP-Referer': window.location.href,
                         'X-Title': 'LEAD Wellness App'
                     },
                     body: JSON.stringify({
@@ -799,7 +831,16 @@
                     })
                 });
                 
+                if (!response.ok) {
+                    throw new Error(`API request failed with status ${response.status}`);
+                }
+                
                 const data = await response.json();
+                
+                if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+                    throw new Error('Invalid API response structure');
+                }
+                
                 const aiResponse = data.choices[0].message.content;
                 
                 // Add AI response
@@ -813,8 +854,9 @@
                 console.error('Error sending therapy message:', error);
                 const errorMessage = document.createElement('div');
                 errorMessage.className = 'chat-message ai';
-                errorMessage.innerHTML = `<p>I'm sorry, I'm having trouble responding right now. Please try again in a moment.</p>`;
+                errorMessage.innerHTML = `<p>I'm having technical difficulties. Please try again later.</p>`;
                 chatContainer.appendChild(errorMessage);
+                chatContainer.scrollTop = chatContainer.scrollHeight;
             }
         }
 
@@ -922,6 +964,10 @@
                 const seconds = elapsed % 60;
                 document.getElementById('breathingDuration').textContent = 
                     `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                
+                // Update XP display (1 XP per minute)
+                const xp = minutes;
+                document.getElementById('breathingXp').textContent = xp;
             }
         }
 
@@ -929,21 +975,10 @@
             if (!breathingStartTime) return;
             
             const duration = Math.floor((Date.now() - breathingStartTime) / 1000);
+            const minutes = Math.floor(duration / 60);
             
             try {
-                // Save breathing session
-                const { error } = await supabase
-                    .from('breathing_sessions')
-                    .insert([{
-                        user_id: currentUser.id,
-                        session_type: 'breathing',
-                        duration: duration,
-                        level: 1
-                    }]);
-                
-                if (error) throw error;
-                
-                // Update user stats  
+                // Get current stats
                 const { data: currentStats } = await supabase
                     .from('user_stats')
                     .select('*')
@@ -953,17 +988,59 @@
                 const today = new Date().toISOString().split('T')[0];
                 const lastSession = currentStats?.last_breathing_session;
                 const isConsecutive = lastSession && 
-                    new Date(lastSession).getTime() === new Date(today).getTime() - 86400000; // Yesterday
+                    new Date(lastSession).getTime() === new Date(today).getTime() - 86400000;
                 
-                await supabase
+                // Calculate experience points (1 XP per minute)
+                const xpEarned = minutes;
+                const currentLevel = currentStats?.breathing_level || 1;
+                const currentXp = currentStats?.breathing_xp || 0;
+                const totalXp = currentXp + xpEarned;
+                
+                // Level up formula (100 XP for level 1, +50 XP needed for each subsequent level)
+                const xpNeeded = 100 + (currentLevel - 1) * 50;
+                const levelsGained = totalXp >= xpNeeded ? Math.floor((totalXp - currentXp) / xpNeeded) : 0;
+                const newLevel = currentLevel + levelsGained;
+                
+                // Save breathing session
+                const { error: sessionError } = await supabase
+                    .from('breathing_sessions')
+                    .insert([{
+                        user_id: currentUser.id,
+                        session_type: 'breathing',
+                        duration: duration,
+                        level: newLevel,
+                        xp_earned: xpEarned
+                    }]);
+                
+                if (sessionError) throw sessionError;
+                
+                // Update user stats
+                const { error: statsError } = await supabase
                     .from('user_stats')
                     .upsert({
                         user_id: currentUser.id,
                         breathing_streak: isConsecutive ? (currentStats?.breathing_streak || 0) + 1 : 1,
                         total_breathing_sessions: (currentStats?.total_breathing_sessions || 0) + 1,
                         last_breathing_session: today,
+                        breathing_level: newLevel,
+                        breathing_xp: totalXp % xpNeeded,
+                        total_breathing_xp: (currentStats?.total_breathing_xp || 0) + xpEarned,
                         updated_at: new Date().toISOString()
                     });
+                
+                if (statsError) throw statsError;
+                
+                // Show level up message if applicable
+                if (levelsGained > 0) {
+                    const circle = document.getElementById('breathingCircle');
+                    const text = document.getElementById('breathingText');
+                    circle.className = 'breathing-circle inhale';
+                    text.textContent = `Level ${newLevel}!`;
+                    setTimeout(() => {
+                        circle.className = 'breathing-circle';
+                        text.textContent = 'Session Complete';
+                    }, 3000);
+                }
                 
                 await loadUserStats();
             } catch (error) {
