@@ -427,6 +427,23 @@
                 height: 150px;
             }
         }
+
+        /* Progress bar styles */
+        .xp-progress {
+            width: 100%;
+            height: 10px;
+            background-color: #e5e7eb;
+            border-radius: 5px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+
+        .xp-progress-bar {
+            height: 100%;
+            background-color: #8b5cf6;
+            border-radius: 5px;
+            transition: width 0.3s ease;
+        }
     </style>
 </head>
 <body>
@@ -462,6 +479,9 @@
                 <div class="stat-card">
                     <div class="stat-value" id="breathingLevel">1</div>
                     <div class="stat-label">Breathing Level</div>
+                    <div class="xp-progress">
+                        <div class="xp-progress-bar" id="xpProgressBar"></div>
+                    </div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-value" id="totalSessions">0</div>
@@ -557,6 +577,9 @@
                     <p>Duration: <span id="breathingDuration">00:00</span></p>
                     <p>XP Earned: <span id="breathingXp">0</span></p>
                     <p>Next Level: <span id="nextLevelXp">100</span> XP</p>
+                    <div class="xp-progress">
+                        <div class="xp-progress-bar" id="breathingXpProgress"></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -659,10 +682,19 @@
         const SUPABASE_URL = 'https://fhthwxgkxuontprzclhb.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZodGh3eGdreHVvbnRwcnpjbGhiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQwNDczNDgsImV4cCI6MjA2OTYyMzM0OH0.9mEHL1jpYXkMeWg0UNKK5LYPosj0eou4k-mw3eof-ZU';
         
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+            db: {
+                schema: 'public'
+            },
+            auth: {
+                persistSession: true,
+                autoRefreshToken: true
+            }
+        });
         
-        const OPENAI_API_KEY = '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';
-        const OPENAI_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
+        // OpenRouter configuration
+        const OPENROUTER_API_KEY = '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';
+        const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
         
         let currentUser = null;
         let breathingTimer = null;
@@ -673,15 +705,20 @@
 
         // Check authentication and load user data
         async function checkAuth() {
-            const { data: { user }, error } = await supabase.auth.getUser();
-            
-            if (error || !user) {
+            try {
+                const { data: { user }, error } = await supabase.auth.getUser();
+                
+                if (error || !user) {
+                    window.location.href = 'index.html';
+                    return;
+                }
+                
+                currentUser = user;
+                await loadUserStats();
+            } catch (error) {
+                console.error('Authentication error:', error);
                 window.location.href = 'index.html';
-                return;
             }
-            
-            currentUser = user;
-            await loadUserStats();
         }
 
         // Load user statistics
@@ -693,19 +730,8 @@
                     .eq('user_id', currentUser.id)
                     .single();
                 
-                if (error) throw error;
-                
-                if (stats) {
-                    document.getElementById('breathingStreak').textContent = stats.breathing_streak || 0;
-                    document.getElementById('breathingLevel').textContent = stats.breathing_level || 1;
-                    document.getElementById('totalSessions').textContent = 
-                        (stats.total_breathing_sessions || 0) + (stats.total_meditation_sessions || 0);
-                    
-                    currentXp = stats.breathing_xp || 0;
-                    nextLevelXp = 100 + ((stats.breathing_level || 1) - 1) * 50;
-                    document.getElementById('breathingXp').textContent = currentXp;
-                    document.getElementById('nextLevelXp').textContent = nextLevelXp;
-                } else {
+                if (error) {
+                    console.error('Error loading stats:', error);
                     // Initialize stats if they don't exist
                     const { error: initError } = await supabase
                         .from('user_stats')
@@ -720,8 +746,20 @@
                         }]);
                     
                     if (initError) throw initError;
-                    await loadUserStats(); // Reload after initialization
-                    return;
+                    return await loadUserStats(); // Reload after initialization
+                }
+                
+                if (stats) {
+                    document.getElementById('breathingStreak').textContent = stats.breathing_streak || 0;
+                    document.getElementById('breathingLevel').textContent = stats.breathing_level || 1;
+                    document.getElementById('totalSessions').textContent = 
+                        (stats.total_breathing_sessions || 0) + (stats.total_meditation_sessions || 0);
+                    
+                    currentXp = stats.breathing_xp || 0;
+                    nextLevelXp = 100 + ((stats.breathing_level || 1) - 1) * 50;
+                    
+                    // Update progress bars
+                    updateXpProgress(currentXp, nextLevelXp);
                 }
                 
                 // Calculate total minutes from sessions
@@ -744,6 +782,15 @@
             } catch (error) {
                 console.error('Error loading user stats:', error);
             }
+        }
+
+        // Update XP progress bars
+        function updateXpProgress(current, needed) {
+            const percentage = Math.min(100, (current / needed) * 100);
+            document.getElementById('xpProgressBar').style.width = `${percentage}%`;
+            document.getElementById('breathingXpProgress').style.width = `${percentage}%`;
+            document.getElementById('breathingXp').textContent = current;
+            document.getElementById('nextLevelXp').textContent = needed;
         }
 
         // Show loading screen and then main content
@@ -809,16 +856,16 @@
             chatContainer.scrollTop = chatContainer.scrollHeight;
             
             try {
-                const response = await fetch(OPENAI_API_URL, {
+                const response = await fetch(OPENROUTER_API_URL, {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${OPENAI_API_KEY}`,
-                        'HTTP-Referer': window.location.href,
-                        'X-Title': 'LEAD Wellness App'
+                        'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+                        'HTTP-Referer': 'https://project-l-e-a-d-academy.github.io',
+                        'X-Title': 'LEAD Wellness App',
+                        'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        model: 'deepseek/deepseek-v3',
+                        model: 'openai/gpt-3.5-turbo',
                         messages: [{
                             role: 'system',
                             content: 'You are a compassionate AI therapy assistant for teenagers. Provide supportive, empathetic responses. Focus on active listening, validation, and gentle guidance. Keep responses conversational and age-appropriate. If someone expresses serious mental health concerns, gently suggest they talk to a trusted adult or professional.'
@@ -832,21 +879,16 @@
                 });
                 
                 if (!response.ok) {
-                    throw new Error(`API request failed with status ${response.status}`);
+                    const errorData = await response.json();
+                    throw new Error(errorData.error?.message || `API request failed with status ${response.status}`);
                 }
                 
                 const data = await response.json();
                 
-                if (!data.choices || !data.choices[0] || !data.choices[0].message) {
-                    throw new Error('Invalid API response structure');
-                }
-                
-                const aiResponse = data.choices[0].message.content;
-                
                 // Add AI response
                 const aiMessage = document.createElement('div');
                 aiMessage.className = 'chat-message ai';
-                aiMessage.innerHTML = `<p>${aiResponse}</p>`;
+                aiMessage.innerHTML = `<p>${data.choices[0].message.content}</p>`;
                 chatContainer.appendChild(aiMessage);
                 
                 chatContainer.scrollTop = chatContainer.scrollHeight;
@@ -854,7 +896,7 @@
                 console.error('Error sending therapy message:', error);
                 const errorMessage = document.createElement('div');
                 errorMessage.className = 'chat-message ai';
-                errorMessage.innerHTML = `<p>I'm having technical difficulties. Please try again later.</p>`;
+                errorMessage.innerHTML = `<p>I'm having connection issues. Please try again later.</p>`;
                 chatContainer.appendChild(errorMessage);
                 chatContainer.scrollTop = chatContainer.scrollHeight;
             }
@@ -968,6 +1010,7 @@
                 // Update XP display (1 XP per minute)
                 const xp = minutes;
                 document.getElementById('breathingXp').textContent = xp;
+                updateXpProgress(currentXp + xp, nextLevelXp);
             }
         }
 
@@ -978,11 +1021,15 @@
             const minutes = Math.floor(duration / 60);
             
             try {
+                // First verify the user exists
+                const { data: { user } } = await supabase.auth.getUser();
+                if (!user) throw new Error('User not authenticated');
+                
                 // Get current stats
                 const { data: currentStats } = await supabase
                     .from('user_stats')
                     .select('*')
-                    .eq('user_id', currentUser.id)
+                    .eq('user_id', user.id)
                     .single();
                 
                 const today = new Date().toISOString().split('T')[0];
@@ -1002,23 +1049,25 @@
                 const newLevel = currentLevel + levelsGained;
                 
                 // Save breathing session
-                const { error: sessionError } = await supabase
+                const { data: session, error: sessionError } = await supabase
                     .from('breathing_sessions')
                     .insert([{
-                        user_id: currentUser.id,
+                        user_id: user.id,
                         session_type: 'breathing',
                         duration: duration,
                         level: newLevel,
                         xp_earned: xpEarned
-                    }]);
-                
+                    }])
+                    .select()
+                    .single();
+                    
                 if (sessionError) throw sessionError;
                 
                 // Update user stats
-                const { error: statsError } = await supabase
+                const { data: stats, error: statsError } = await supabase
                     .from('user_stats')
                     .upsert({
-                        user_id: currentUser.id,
+                        user_id: user.id,
                         breathing_streak: isConsecutive ? (currentStats?.breathing_streak || 0) + 1 : 1,
                         total_breathing_sessions: (currentStats?.total_breathing_sessions || 0) + 1,
                         last_breathing_session: today,
@@ -1026,8 +1075,10 @@
                         breathing_xp: totalXp % xpNeeded,
                         total_breathing_xp: (currentStats?.total_breathing_xp || 0) + xpEarned,
                         updated_at: new Date().toISOString()
-                    });
-                
+                    })
+                    .select()
+                    .single();
+                    
                 if (statsError) throw statsError;
                 
                 // Show level up message if applicable
