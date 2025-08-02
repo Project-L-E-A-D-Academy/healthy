@@ -6,6 +6,7 @@
   <title>Community Leaderboards</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     @keyframes spin {
       0% { transform: rotate(0deg); }
@@ -19,6 +20,13 @@
       -webkit-user-select: none;
       -moz-user-select: none;
       -ms-user-select: none;
+    }
+    .fade-leader {
+      animation: fadeInOut 3s ease-in-out infinite;
+    }
+    @keyframes fadeInOut {
+      0%, 100% { opacity: 0.5; transform: scale(0.98); }
+      50% { opacity: 1; transform: scale(1); }
     }
   </style>
 </head>
@@ -59,67 +67,14 @@
     // Initialize Lucide icons
     lucide.createIcons();
 
-    // Mock data
-    const mockMindfulnessData = [
-      { id: 1, name: "Alex Chen", avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face", breathingLevel: 12, totalMinutes: 2340, totalSessions: 89, averageSession: 26.3 },
-      { id: 2, name: "Sarah Kim", avatar: "https://images.unsplash.com/photo-1494790108755-2616b381dea8?w=40&h=40&fit=crop&crop=face", breathingLevel: 11, totalMinutes: 2100, totalSessions: 95, averageSession: 22.1 },
-      { id: 3, name: "Mike Johnson", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=40&h=40&fit=crop&crop=face", breathingLevel: 10, totalMinutes: 1890, totalSessions: 72, averageSession: 26.3 },
-      { id: 4, name: "Emma Davis", avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=40&h=40&fit=crop&crop=face", breathingLevel: 9, totalMinutes: 1650, totalSessions: 68, averageSession: 24.3 },
-      { id: 5, name: "David Wilson", avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=40&h=40&fit=crop&crop=face", breathingLevel: 8, totalMinutes: 1420, totalSessions: 55, averageSession: 25.8 }
-    ];
+    // Supabase configuration
+    const SUPABASE_URL = 'https://fhthwxgkxuontprzclhb.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZodGh3eGdreHVvbnRwcnpjbGhiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQwNDczNDgsImV4cCI6MjA2OTYyMzM0OH0.9mEHL1jpYXkMeWg0UNKK5LYPosj0eou4k-mw3eof-ZU';
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    const mockNutritionData = [
-      { id: 1, name: "Lisa Rodriguez", avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=40&h=40&fit=crop&crop=face", correctAnswers: 142, wrongAnswers: 28, totalAnswers: 170, accuracy: 83.5 },
-      { id: 2, name: "James Brown", avatar: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=40&h=40&fit=crop&crop=face", correctAnswers: 128, wrongAnswers: 45, totalAnswers: 173, accuracy: 74.0 },
-      { id: 3, name: "Anna Taylor", avatar: "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=40&h=40&fit=crop&crop=face", correctAnswers: 115, wrongAnswers: 32, totalAnswers: 147, accuracy: 78.2 },
-      { id: 4, name: "Chris Lee", avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face", correctAnswers: 98, wrongAnswers: 52, totalAnswers: 150, accuracy: 65.3 },
-      { id: 5, name: "Maya Patel", avatar: "https://images.unsplash.com/photo-1489424731084-a5d8b219a5bb?w=40&h=40&fit=crop&crop=face", correctAnswers: 87, wrongAnswers: 38, totalAnswers: 125, accuracy: 69.6 }
-    ];
-
-    // Sample nutrition questions by grade level
-    const sampleQuestions = {
-      elementary: [
-        {
-          question: "Which food group helps build strong bones and teeth?",
-          options: ["Fruits", "Dairy", "Grains", "Vegetables"],
-          correct: 1,
-          explanation: "Dairy products like milk and cheese are rich in calcium, which helps build strong bones and teeth."
-        },
-        {
-          question: "How many food groups are there in a healthy diet?",
-          options: ["3", "4", "5", "6"],
-          correct: 2,
-          explanation: "There are 5 main food groups: fruits, vegetables, grains, protein, and dairy."
-        }
-      ],
-      middle: [
-        {
-          question: "What is the recommended daily intake of water for teenagers?",
-          options: ["4-6 cups", "6-8 cups", "8-10 cups", "10-12 cups"],
-          correct: 2,
-          explanation: "Teenagers should drink 8-10 cups of water daily to stay properly hydrated."
-        },
-        {
-          question: "Which nutrient is the body's main source of energy?",
-          options: ["Protein", "Fat", "Carbohydrates", "Vitamins"],
-          correct: 2,
-          explanation: "Carbohydrates are the body's preferred source of energy for daily activities."
-        }
-      ],
-      high: [
-        {
-          question: "What is the difference between saturated and unsaturated fats?",
-          options: [
-            "Saturated fats are liquid at room temperature",
-            "Unsaturated fats are solid at room temperature", 
-            "Saturated fats are solid at room temperature",
-            "There is no difference"
-          ],
-          correct: 2,
-          explanation: "Saturated fats are typically solid at room temperature (like butter), while unsaturated fats are liquid (like olive oil)."
-        }
-      ]
-    };
+    // OpenRouter configuration
+    const OPENROUTER_API_KEY = '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';
+    const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
     // App state
     const state = {
@@ -138,7 +93,8 @@
       suspiciousActivity: 0,
       quizStartTime: null,
       tabSwitchCount: 0,
-      isWindowFocused: true
+      isWindowFocused: true,
+      currentUser: null
     };
 
     // DOM elements
@@ -150,9 +106,31 @@
     };
 
     // Initialize the app
-    function init() {
+    async function init() {
+      await checkAuth();
       renderMindfulnessLeaderboard();
       setupEventListeners();
+    }
+
+    // Check authentication
+    async function checkAuth() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        window.location.href = 'index.html';
+        return;
+      }
+      state.currentUser = user;
+      
+      // Get user grade level
+      const { data: profile } = await supabase
+        .from('user_profiles')
+        .select('grade_level')
+        .eq('id', user.id)
+        .single();
+      
+      if (profile && profile.grade_level) {
+        state.userGrade = profile.grade_level.toLowerCase().replace('th', '').replace(' grade', '');
+      }
     }
 
     // Set up event listeners
@@ -218,19 +196,122 @@
       state.isWindowFocused = true;
     }
 
-    // Generate quiz questions
-    function generateQuizQuestions() {
+    // Generate quiz questions using OpenAI
+    async function generateQuizQuestions() {
       state.isGeneratingQuiz = true;
       renderQuiz();
       
-      // Simulate API call
-      setTimeout(() => {
-        const gradeQuestions = sampleQuestions[state.userGrade] || sampleQuestions.middle;
-        const shuffled = [...gradeQuestions].sort(() => Math.random() - 0.5);
-        state.quizQuestions = shuffled.slice(0, 5);
-        state.isGeneratingQuiz = false;
-        renderQuiz();
-      }, 2000);
+      try {
+        // Get user grade level for prompt
+        const gradeLevels = {
+          '6': 'elementary school (6th grade)',
+          '7': 'middle school (7th grade)',
+          '8': 'middle school (8th grade)',
+          '9': 'high school (9th grade)',
+          '10': 'high school (10th grade)'
+        };
+        const gradeDescription = gradeLevels[state.userGrade] || 'middle school';
+        
+        const response = await fetch(OPENROUTER_API_URL, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+            'HTTP-Referer': 'https://project-l-e-a-d-academy.github.io',
+            'X-Title': 'LEAD Nutrition Quiz',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            model: 'deepseek/deepseek-r1-0528:free',
+            messages: [{
+              role: 'system',
+              content: `Generate 5 creative nutrition quiz questions for ${gradeDescription} students. Each question should have:
+- A creative, engaging question that tests practical nutrition knowledge
+- 4 answer options (a, b, c, d)
+- The correct answer (1-4)
+- A brief explanation (2-3 sentences)
+              
+Format as JSON: [{
+  "question": "...",
+  "options": ["...", "...", "...", "..."],
+  "correct": 1,
+  "explanation": "..."
+}]`
+            }],
+            response_format: { type: "json_object" }
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error(`API request failed with status ${response.status}`);
+        }
+
+        const data = await response.json();
+        const questions = JSON.parse(data.choices[0].message.content);
+        
+        // Ensure we have valid questions
+        if (Array.isArray(questions) {
+          state.quizQuestions = questions.slice(0, 5);
+        } else {
+          // Fallback to sample questions if API response is unexpected
+          state.quizQuestions = getSampleQuestions().slice(0, 5);
+        }
+      } catch (error) {
+        console.error('Error generating quiz:', error);
+        // Fallback to sample questions
+        state.quizQuestions = getSampleQuestions().slice(0, 5);
+      }
+      
+      state.isGeneratingQuiz = false;
+      renderQuiz();
+    }
+
+    // Get sample questions based on grade level
+    function getSampleQuestions() {
+      const sampleQuestions = {
+        elementary: [
+          {
+            question: "Which food group helps build strong bones and teeth?",
+            options: ["Fruits", "Dairy", "Grains", "Vegetables"],
+            correct: 1,
+            explanation: "Dairy products like milk and cheese are rich in calcium, which helps build strong bones and teeth."
+          },
+          {
+            question: "How many food groups are there in a healthy diet?",
+            options: ["3", "4", "5", "6"],
+            correct: 2,
+            explanation: "There are 5 main food groups: fruits, vegetables, grains, protein, and dairy."
+          }
+        ],
+        middle: [
+          {
+            question: "What is the recommended daily intake of water for teenagers?",
+            options: ["4-6 cups", "6-8 cups", "8-10 cups", "10-12 cups"],
+            correct: 2,
+            explanation: "Teenagers should drink 8-10 cups of water daily to stay properly hydrated."
+          },
+          {
+            question: "Which nutrient is the body's main source of energy?",
+            options: ["Protein", "Fat", "Carbohydrates", "Vitamins"],
+            correct: 2,
+            explanation: "Carbohydrates are the body's preferred source of energy for daily activities."
+          }
+        ],
+        high: [
+          {
+            question: "What is the difference between saturated and unsaturated fats?",
+            options: [
+              "Saturated fats are liquid at room temperature",
+              "Unsaturated fats are solid at room temperature", 
+              "Saturated fats are solid at room temperature",
+              "There is no difference"
+            ],
+            correct: 2,
+            explanation: "Saturated fats are typically solid at room temperature (like butter), while unsaturated fats are liquid (like olive oil)."
+          }
+        ]
+      };
+      
+      return sampleQuestions[state.userGrade] || sampleQuestions.middle;
     }
 
     // Start quiz
@@ -408,219 +489,256 @@
     }
 
     // Render mindfulness leaderboard
-    function renderMindfulnessLeaderboard() {
-      const sortedByBreathing = [...mockMindfulnessData].sort((a, b) => b.breathingLevel - a.breathingLevel);
-      const sortedByAverage = [...mockMindfulnessData].sort((a, b) => b.averageSession - a.averageSession);
-      
-      const currentData = state.activeMindfulnessTab === 'breathing' ? sortedByBreathing : sortedByAverage;
-      const title = state.activeMindfulnessTab === 'breathing' ? 'Breathing Level' : 'Average Session';
-      const icon = state.activeMindfulnessTab === 'breathing' ? '<i data-lucide="brain" class="w-5 h-5"></i>' : '<i data-lucide="clock" class="w-5 h-5"></i>';
+    async function renderMindfulnessLeaderboard() {
+      try {
+        // Get mindfulness data from Supabase
+        const { data: mindfulnessData, error } = await supabase
+          .from('user_stats')
+          .select(`
+            breathing_level,
+            total_minutes,
+            user_profiles (
+              username,
+              avatar_url
+            )
+          `)
+          .order('breathing_level', { ascending: false })
+          .limit(5);
+        
+        if (error) throw error;
+        
+        const sortedByBreathing = mindfulnessData || [];
+        const sortedByAverage = [...sortedByBreathing].sort((a, b) => 
+          (b.total_minutes / (b.total_sessions || 1)) - (a.total_minutes / (a.total_sessions || 1)));
+        
+        const currentData = state.activeMindfulnessTab === 'breathing' ? sortedByBreathing : sortedByAverage;
+        const title = state.activeMindfulnessTab === 'breathing' ? 'Breathing Level' : 'Average Session';
+        const icon = state.activeMindfulnessTab === 'breathing' ? '<i data-lucide="brain" class="w-5 h-5"></i>' : '<i data-lucide="clock" class="w-5 h-5"></i>';
 
-      const html = `
-        <div class="space-y-6">
-          <div class="flex space-x-1 bg-slate-100 p-1 rounded-lg">
-            <button
-              onclick="state.activeMindfulnessTab = 'breathing'; renderMindfulnessLeaderboard();"
-              class="flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-                state.activeMindfulnessTab === 'breathing' 
-                  ? 'bg-white text-blue-600 shadow-sm' 
-                  : 'text-slate-600 hover:text-slate-900'
-              }"
-            >
-              <i data-lucide="brain" class="w-4 h-4 inline mr-2"></i>
-              Breathing Level
-            </button>
-            <button
-              onclick="state.activeMindfulnessTab = 'average'; renderMindfulnessLeaderboard();"
-              class="flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-                state.activeMindfulnessTab === 'average' 
-                  ? 'bg-white text-blue-600 shadow-sm' 
-                  : 'text-slate-600 hover:text-slate-900'
-              }"
-            >
-              <i data-lucide="clock" class="w-4 h-4 inline mr-2"></i>
-              Average Session
-            </button>
-          </div>
-
-          <div class="bg-white rounded-xl shadow-sm border border-slate-200">
-            <div class="p-6 border-b border-slate-200">
-              <div class="flex items-center space-x-2">
-                ${icon}
-                <h3 class="text-lg font-semibold text-slate-900">Top ${title} Masters</h3>
-              </div>
+        const html = `
+          <div class="space-y-6">
+            <div class="flex space-x-1 bg-slate-100 p-1 rounded-lg">
+              <button
+                onclick="state.activeMindfulnessTab = 'breathing'; renderMindfulnessLeaderboard();"
+                class="flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+                  state.activeMindfulnessTab === 'breathing' 
+                    ? 'bg-white text-blue-600 shadow-sm' 
+                    : 'text-slate-600 hover:text-slate-900'
+                }"
+              >
+                <i data-lucide="brain" class="w-4 h-4 inline mr-2"></i>
+                Breathing Level
+              </button>
+              <button
+                onclick="state.activeMindfulnessTab = 'average'; renderMindfulnessLeaderboard();"
+                class="flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+                  state.activeMindfulnessTab === 'average' 
+                    ? 'bg-white text-blue-600 shadow-sm' 
+                    : 'text-slate-600 hover:text-slate-900'
+                }"
+              >
+                <i data-lucide="clock" class="w-4 h-4 inline mr-2"></i>
+                Average Session
+              </button>
             </div>
-            
-            <div class="p-6">
-              <div class="space-y-4">
-                ${currentData.slice(0, 5).map((user, index) => `
-                  <div key="${user.id}" class="flex items-center justify-between p-4 rounded-lg border-2 ${getRankBg(index + 1)}">
-                    <div class="flex items-center space-x-4">
-                      ${getRankIcon(index + 1)}
-                      <img 
-                        src="${user.avatar}" 
-                        alt="${user.name}"
-                        class="w-12 h-12 rounded-full object-cover border-2 border-white shadow-sm"
-                      />
-                      <div>
-                        <h4 class="font-semibold text-slate-900">${user.name}</h4>
-                        <div class="flex items-center space-x-4 text-sm text-slate-600">
-                          <span class="flex items-center">
-                            <i data-lucide="calendar" class="w-4 h-4 mr-1"></i>
-                            ${user.totalSessions} sessions
-                          </span>
-                          <span class="flex items-center">
-                            <i data-lucide="clock" class="w-4 h-4 mr-1"></i>
-                            ${user.totalMinutes} min
-                          </span>
+
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200">
+              <div class="p-6 border-b border-slate-200">
+                <div class="flex items-center space-x-2">
+                  ${icon}
+                  <h3 class="text-lg font-semibold text-slate-900">Top ${title} Masters</h3>
+                </div>
+              </div>
+              
+              <div class="p-6">
+                <div class="space-y-4">
+                  ${currentData.map((user, index) => `
+                    <div key="${user.user_profiles.username}" class="flex items-center justify-between p-4 rounded-lg border-2 ${getRankBg(index + 1)} ${index === 0 ? 'fade-leader' : ''}">
+                      <div class="flex items-center space-x-4">
+                        ${getRankIcon(index + 1)}
+                        <img 
+                          src="${user.user_profiles.avatar_url || 'https://www.gravatar.com/avatar/?d=mp'}" 
+                          alt="${user.user_profiles.username}"
+                          class="w-12 h-12 rounded-full object-cover border-2 border-white shadow-sm"
+                        />
+                        <div>
+                          <h4 class="font-semibold text-slate-900">${user.user_profiles.username}</h4>
+                          <div class="flex items-center space-x-4 text-sm text-slate-600">
+                            <span class="flex items-center">
+                              <i data-lucide="clock" class="w-4 h-4 mr-1"></i>
+                              ${user.total_minutes || 0} min
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div class="text-right">
+                        <div class="text-2xl font-bold text-slate-900">
+                          ${state.activeMindfulnessTab === 'breathing' ? user.breathing_level : `${Math.round(user.total_minutes / 10) || 0}m`}
+                        </div>
+                        <div class="text-sm text-slate-500">
+                          ${state.activeMindfulnessTab === 'breathing' ? 'Level' : 'avg/session'}
                         </div>
                       </div>
                     </div>
-                    
-                    <div class="text-right">
-                      <div class="text-2xl font-bold text-slate-900">
-                        ${state.activeMindfulnessTab === 'breathing' ? user.breathingLevel : `${user.averageSession}m`}
-                      </div>
-                      <div class="text-sm text-slate-500">
-                        ${state.activeMindfulnessTab === 'breathing' ? 'Level' : 'avg/session'}
-                      </div>
-                    </div>
-                  </div>
-                `).join('')}
+                  `).join('')}
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      `;
+        `;
 
-      elements.mindfulnessLeaderboard.innerHTML = html;
-      lucide.createIcons();
+        elements.mindfulnessLeaderboard.innerHTML = html;
+        lucide.createIcons();
+      } catch (error) {
+        console.error('Error rendering mindfulness leaderboard:', error);
+        elements.mindfulnessLeaderboard.innerHTML = '<p class="text-center text-red-500">Error loading leaderboard data</p>';
+      }
     }
 
     // Render nutrition leaderboard
-    function renderNutritionLeaderboard() {
-      const sortedByCorrect = [...mockNutritionData].sort((a, b) => b.correctAnswers - a.correctAnswers);
-      const sortedByWrong = [...mockNutritionData].sort((a, b) => b.wrongAnswers - a.wrongAnswers);
-      const sortedByTotal = [...mockNutritionData].sort((a, b) => b.totalAnswers - a.totalAnswers);
-      
-      let currentData, title, icon, valueKey, valueLabel;
-      
-      switch(state.activeNutritionTab) {
-        case 'correct':
-          currentData = sortedByCorrect;
-          title = 'Most Correct Answers';
-          icon = '<i data-lucide="check-circle" class="w-5 h-5 text-green-600"></i>';
-          valueKey = 'correctAnswers';
-          valueLabel = 'correct';
-          break;
-        case 'wrong':
-          currentData = sortedByWrong;
-          title = 'Most Wrong Answers';
-          icon = '<i data-lucide="x-circle" class="w-5 h-5 text-red-600"></i>';
-          valueKey = 'wrongAnswers';
-          valueLabel = 'wrong';
-          break;
-        case 'total':
-          currentData = sortedByTotal;
-          title = 'Most Active Learners';
-          icon = '<i data-lucide="users" class="w-5 h-5 text-blue-600"></i>';
-          valueKey = 'totalAnswers';
-          valueLabel = 'total';
-          break;
-      }
+    async function renderNutritionLeaderboard() {
+      try {
+        // Get nutrition data from Supabase
+        const { data: nutritionData, error } = await supabase
+          .from('nutrition_stats')
+          .select(`
+            correct_answers,
+            wrong_answers,
+            total_answers,
+            accuracy,
+            user_profiles (
+              username,
+              avatar_url
+            )
+          `)
+          .order(state.activeNutritionTab === 'correct' ? 'correct_answers' : 
+                state.activeNutritionTab === 'wrong' ? 'wrong_answers' : 'total_answers', 
+                { ascending: false })
+          .limit(5);
+        
+        if (error) throw error;
+        
+        let currentData = nutritionData || [];
+        let title, icon, valueKey, valueLabel;
+        
+        switch(state.activeNutritionTab) {
+          case 'correct':
+            title = 'Most Correct Answers';
+            icon = '<i data-lucide="check-circle" class="w-5 h-5 text-green-600"></i>';
+            valueKey = 'correct_answers';
+            valueLabel = 'correct';
+            break;
+          case 'wrong':
+            title = 'Most Wrong Answers';
+            icon = '<i data-lucide="x-circle" class="w-5 h-5 text-red-600"></i>';
+            valueKey = 'wrong_answers';
+            valueLabel = 'wrong';
+            break;
+          case 'total':
+            title = 'Most Active Learners';
+            icon = '<i data-lucide="users" class="w-5 h-5 text-blue-600"></i>';
+            valueKey = 'total_answers';
+            valueLabel = 'total';
+            break;
+        }
 
-      const html = `
-        <div class="space-y-6">
-          <div class="flex space-x-1 bg-slate-100 p-1 rounded-lg">
-            <button
-              onclick="state.activeNutritionTab = 'correct'; renderNutritionLeaderboard();"
-              class="flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors ${
-                state.activeNutritionTab === 'correct' 
-                  ? 'bg-white text-green-600 shadow-sm' 
-                  : 'text-slate-600 hover:text-slate-900'
-              }"
-            >
-              <i data-lucide="check-circle" class="w-4 h-4 inline mr-1"></i>
-              Most Correct
-            </button>
-            <button
-              onclick="state.activeNutritionTab = 'wrong'; renderNutritionLeaderboard();"
-              class="flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors ${
-                state.activeNutritionTab === 'wrong' 
-                  ? 'bg-white text-red-600 shadow-sm' 
-                  : 'text-slate-600 hover:text-slate-900'
-              }"
-            >
-              <i data-lucide="x-circle" class="w-4 h-4 inline mr-1"></i>
-              Most Wrong
-            </button>
-            <button
-              onclick="state.activeNutritionTab = 'total'; renderNutritionLeaderboard();"
-              class="flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors ${
-                state.activeNutritionTab === 'total' 
-                  ? 'bg-white text-blue-600 shadow-sm' 
-                  : 'text-slate-600 hover:text-slate-900'
-              }"
-            >
-              <i data-lucide="users" class="w-4 h-4 inline mr-1"></i>
-              Most Active
-            </button>
-          </div>
-
-          <div class="bg-white rounded-xl shadow-sm border border-slate-200">
-            <div class="p-6 border-b border-slate-200 flex items-center justify-between">
-              <div class="flex items-center space-x-2">
-                ${icon}
-                <h3 class="text-lg font-semibold text-slate-900">${title}</h3>
-              </div>
+        const html = `
+          <div class="space-y-6">
+            <div class="flex space-x-1 bg-slate-100 p-1 rounded-lg">
               <button
-                onclick="startQuiz()"
-                class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center space-x-2"
+                onclick="state.activeNutritionTab = 'correct'; renderNutritionLeaderboard();"
+                class="flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors ${
+                  state.activeNutritionTab === 'correct' 
+                    ? 'bg-white text-green-600 shadow-sm' 
+                    : 'text-slate-600 hover:text-slate-900'
+                }"
               >
-                <i data-lucide="play" class="w-4 h-4"></i>
-                <span>Take Quiz</span>
+                <i data-lucide="check-circle" class="w-4 h-4 inline mr-1"></i>
+                Most Correct
+              </button>
+              <button
+                onclick="state.activeNutritionTab = 'wrong'; renderNutritionLeaderboard();"
+                class="flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors ${
+                  state.activeNutritionTab === 'wrong' 
+                    ? 'bg-white text-red-600 shadow-sm' 
+                    : 'text-slate-600 hover:text-slate-900'
+                }"
+              >
+                <i data-lucide="x-circle" class="w-4 h-4 inline mr-1"></i>
+                Most Wrong
+              </button>
+              <button
+                onclick="state.activeNutritionTab = 'total'; renderNutritionLeaderboard();"
+                class="flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors ${
+                  state.activeNutritionTab === 'total' 
+                    ? 'bg-white text-blue-600 shadow-sm' 
+                    : 'text-slate-600 hover:text-slate-900'
+                }"
+              >
+                <i data-lucide="users" class="w-4 h-4 inline mr-1"></i>
+                Most Active
               </button>
             </div>
-            
-            <div class="p-6">
-              <div class="space-y-4">
-                ${currentData.slice(0, 5).map((user, index) => `
-                  <div key="${user.id}" class="flex items-center justify-between p-4 rounded-lg border-2 ${getRankBg(index + 1)}">
-                    <div class="flex items-center space-x-4">
-                      ${getRankIcon(index + 1)}
-                      <img 
-                        src="${user.avatar}" 
-                        alt="${user.name}"
-                        class="w-12 h-12 rounded-full object-cover border-2 border-white shadow-sm"
-                      />
-                      <div>
-                        <h4 class="font-semibold text-slate-900">${user.name}</h4>
-                        <div class="flex items-center space-x-4 text-sm text-slate-600">
-                          <span class="text-green-600">✓ ${user.correctAnswers}</span>
-                          <span class="text-red-600">✗ ${user.wrongAnswers}</span>
-                          <span class="text-blue-600">${user.accuracy}% accuracy</span>
+
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200">
+              <div class="p-6 border-b border-slate-200 flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                  ${icon}
+                  <h3 class="text-lg font-semibold text-slate-900">${title}</h3>
+                </div>
+                <button
+                  onclick="startQuiz()"
+                  class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center space-x-2"
+                >
+                  <i data-lucide="play" class="w-4 h-4"></i>
+                  <span>Take Quiz</span>
+                </button>
+              </div>
+              
+              <div class="p-6">
+                <div class="space-y-4">
+                  ${currentData.map((user, index) => `
+                    <div key="${user.user_profiles.username}" class="flex items-center justify-between p-4 rounded-lg border-2 ${getRankBg(index + 1)} ${index === 0 ? 'fade-leader' : ''}">
+                      <div class="flex items-center space-x-4">
+                        ${getRankIcon(index + 1)}
+                        <img 
+                          src="${user.user_profiles.avatar_url || 'https://www.gravatar.com/avatar/?d=mp'}" 
+                          alt="${user.user_profiles.username}"
+                          class="w-12 h-12 rounded-full object-cover border-2 border-white shadow-sm"
+                        />
+                        <div>
+                          <h4 class="font-semibold text-slate-900">${user.user_profiles.username}</h4>
+                          <div class="flex items-center space-x-4 text-sm text-slate-600">
+                            <span class="text-green-600">✓ ${user.correct_answers || 0}</span>
+                            <span class="text-red-600">✗ ${user.wrong_answers || 0}</span>
+                            <span class="text-blue-600">${user.accuracy || 0}% accuracy</span>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div class="text-right">
+                        <div class="text-2xl font-bold text-slate-900">
+                          ${user[valueKey] || 0}
+                        </div>
+                        <div class="text-sm text-slate-500">
+                          ${valueLabel}
                         </div>
                       </div>
                     </div>
-                    
-                    <div class="text-right">
-                      <div class="text-2xl font-bold text-slate-900">
-                        ${user[valueKey]}
-                      </div>
-                      <div class="text-sm text-slate-500">
-                        ${valueLabel}
-                      </div>
-                    </div>
-                  </div>
-                `).join('')}
+                  `).join('')}
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      `;
+        `;
 
-      elements.nutritionLeaderboard.innerHTML = html;
-      lucide.createIcons();
+        elements.nutritionLeaderboard.innerHTML = html;
+        lucide.createIcons();
+      } catch (error) {
+        console.error('Error rendering nutrition leaderboard:', error);
+        elements.nutritionLeaderboard.innerHTML = '<p class="text-center text-red-500">Error loading leaderboard data</p>';
+      }
     }
 
     // Render quiz
@@ -665,7 +783,7 @@
               <p class="text-lg opacity-80">Quiz will resume automatically...</p>
               <div class="mt-6">
                 <div class="text-red-400 text-sm">
-                  • Tab switches: ${state.tabSwitchCount}<br>
+                  • Tab switches: ${state.tabSwitchCount}
                   • Suspicious actions: ${state.suspiciousActivity}
                 </div>
               </div>
@@ -688,6 +806,11 @@
         const avgTimePerQuestion = totalTime / state.quizQuestions.length;
         const integrityScore = Math.max(0, 100 - (state.suspiciousActivity * 10) - (state.tabSwitchCount * 15));
         const isValidScore = integrityScore >= 50 && avgTimePerQuestion >= 10;
+        
+        // Only save results if quiz was completed with integrity
+        if (isValidScore && state.score > 0) {
+          saveQuizResults();
+        }
         
         const html = `
           <div id="quizModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -748,7 +871,7 @@
         return;
       }
 
-      if (!state.quizQuestions.length) return;
+      if (!state.quizQuestions.length) return null;
 
       const question = state.quizQuestions[state.currentQuestion];
 
@@ -819,7 +942,7 @@
                           ? 'border-blue-500 bg-blue-500 text-white'
                           : 'border-slate-300'
                       }">
-                        ${state.selectedAnswer === index ? '✓' : ''}
+                        ${state.selectedAnswer === index && '✓'}
                       </div>
                       <span>${option}</span>
                     </div>
@@ -837,7 +960,7 @@
               </button>
               <button
                 onclick="handleNextQuestion()"
-                ${state.selectedAnswer === null ? 'disabled' : ''}
+                disabled="${state.selectedAnswer === null}"
                 class="px-6 py-3 rounded-lg font-medium transition-colors flex items-center space-x-2 ${
                   state.selectedAnswer !== null
                     ? 'bg-blue-600 hover:bg-blue-700 text-white'
@@ -861,6 +984,46 @@
       lucide.createIcons();
     }
 
+    // Save quiz results to Supabase
+    async function saveQuizResults() {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        // Get current stats
+        const { data: currentStats } = await supabase
+          .from('nutrition_stats')
+          .select('*')
+          .eq('user_id', user.id)
+          .single();
+
+        // Calculate new values
+        const correctAnswers = (currentStats?.correct_answers || 0) + state.score;
+        const wrongAnswers = (currentStats?.wrong_answers || 0) + (state.quizQuestions.length - state.score);
+        const totalAnswers = correctAnswers + wrongAnswers;
+        const accuracy = Math.round((correctAnswers / totalAnswers) * 100);
+
+        // Upsert stats
+        const { error } = await supabase
+          .from('nutrition_stats')
+          .upsert({
+            user_id: user.id,
+            correct_answers: correctAnswers,
+            wrong_answers: wrongAnswers,
+            total_answers: totalAnswers,
+            accuracy: accuracy,
+            last_quiz_date: new Date().toISOString()
+          });
+
+        if (error) throw error;
+
+        // Refresh leaderboard
+        renderNutritionLeaderboard();
+      } catch (error) {
+        console.error('Error saving quiz results:', error);
+      }
+    }
+
     // Initialize the app
     init();
 
@@ -869,7 +1032,8 @@
     window.handleAnswerSelect = handleAnswerSelect;
     window.handleNextQuestion = handleNextQuestion;
     window.resetQuiz = resetQuiz;
-    window.state = state;
+    window.renderMindfulnessLeaderboard = renderMindfulnessLeaderboard;
+    window.renderNutritionLeaderboard = renderNutritionLeaderboard;
   </script>
 </body>
 </html>
