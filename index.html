@@ -6,7 +6,6 @@
   <title>LEAD - Learn. Empower. Achieve. Dream.</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    /* --- same styles as before --- */
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: 'Arial', sans-serif;
@@ -95,6 +94,33 @@
     }
     .signup-fields { display: none; }
     .signup-fields.active { display: block; }
+    .avatar-upload {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .avatar-preview {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid #e5e7eb;
+      margin-bottom: 10px;
+    }
+    .avatar-upload-btn {
+      background: #f3f4f6;
+      color: #4b5563;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background 0.3s;
+    }
+    .avatar-upload-btn:hover {
+      background: #e5e7eb;
+    }
   </style>
 </head>
 <body>
@@ -113,6 +139,11 @@
       </div>
 
       <div class="signup-fields" id="signupFields">
+        <div class="avatar-upload">
+          <img id="avatarPreview" src="https://www.gravatar.com/avatar/?d=mp" class="avatar-preview" alt="Avatar Preview">
+          <button type="button" class="avatar-upload-btn" id="avatarUploadBtn">Upload Profile Picture</button>
+          <input type="file" id="avatarInput" accept="image/*" style="display: none;">
+        </div>
         <div class="form-group">
           <label for="username">Username</label>
           <input type="text" id="username" />
@@ -130,8 +161,6 @@
             <option value="8th">8th Grade</option>
             <option value="9th">9th Grade</option>
             <option value="10th">10th Grade</option>
-            <option value="11th">11th Grade</option>
-            <option value="12th">12th Grade</option>
           </select>
         </div>
       </div>
@@ -153,6 +182,7 @@
 
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     let isSignUp = false;
+    let avatarFile = null;
 
     const form = document.getElementById('authForm');
     const submitBtn = document.getElementById('submitBtn');
@@ -161,6 +191,26 @@
     const message = document.getElementById('message');
     const toggleText = document.getElementById('toggleText');
     const toggleLink = document.getElementById('toggleLink');
+    const avatarInput = document.getElementById('avatarInput');
+    const avatarPreview = document.getElementById('avatarPreview');
+    const avatarUploadBtn = document.getElementById('avatarUploadBtn');
+
+    // Handle avatar upload
+    avatarUploadBtn.addEventListener('click', () => {
+      avatarInput.click();
+    });
+
+    avatarInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        avatarFile = file;
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          avatarPreview.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+    });
 
     function toggleForm() {
       isSignUp = !isSignUp;
@@ -188,6 +238,30 @@
       message.className = type;
     }
 
+    async function uploadAvatar(userId) {
+      if (!avatarFile) return null;
+      
+      const fileExt = avatarFile.name.split('.').pop();
+      const fileName = `${userId}-${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+      const filePath = `avatars/${fileName}`;
+
+      const { data, error } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, avatarFile);
+
+      if (error) {
+        console.error('Error uploading avatar:', error);
+        return null;
+      }
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
+
+      return publicUrl;
+    }
+
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       const email = document.getElementById('email').value;
@@ -204,7 +278,7 @@
             return;
           }
 
-          const { error: signUpError } = await supabase.auth.signUp({
+          const { data: { user }, error: signUpError } = await supabase.auth.signUp({
             email: email,
             password: password
           });
@@ -214,33 +288,29 @@
             return;
           }
 
-          setTimeout(async () => {
-            const {
-              data: { user },
-              error: userError
-            } = await supabase.auth.getUser();
+          // Upload avatar if provided
+          let avatarUrl = null;
+          if (avatarFile) {
+            avatarUrl = await uploadAvatar(user.id);
+          }
 
-            if (!user || userError) {
-              showMessage('Please verify your email before proceeding.');
-              return;
-            }
+          // Create user profile
+          const { error: profileError } = await supabase
+            .from('user_profiles')
+            .insert([{
+              id: user.id,
+              username,
+              birthday,
+              grade_level: gradeLevel,
+              avatar_url: avatarUrl
+            }]);
 
-            const { error: profileError } = await supabase
-              .from('user_profiles')
-              .insert([{
-                id: user.id,
-                username,
-                birthday,
-                grade_level: gradeLevel
-              }]);
+          if (profileError) {
+            showMessage('Profile creation error: ' + profileError.message);
+            return;
+          }
 
-            if (profileError) {
-              showMessage('Profile creation error: ' + profileError.message);
-              return;
-            }
-
-            showMessage('Account created! You can now log in.', 'success');
-          }, 1000);
+          showMessage('Account created! Please check your email to verify your account.', 'success');
         } else {
           const { data, error } = await supabase.auth.signInWithPassword({
             email: email,
