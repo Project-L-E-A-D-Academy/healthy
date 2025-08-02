@@ -218,6 +218,51 @@
             font-weight: bold;
         }
 
+        .leaderboard-preview {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 10px;
+            text-align: left;
+        }
+
+        .leaderboard-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: #6b7280;
+            margin-bottom: 10px;
+        }
+
+        .leaderboard-entry {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            animation: fadeIn 1s ease-in-out;
+        }
+
+        .leaderboard-entry img {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-right: 10px;
+        }
+
+        .leaderboard-entry .name {
+            flex: 1;
+            font-size: 14px;
+        }
+
+        .leaderboard-entry .value {
+            font-weight: bold;
+            color: #1f2937;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
         @media (max-width: 768px) {
             .menu-grid {
                 grid-template-columns: 1fr;
@@ -266,6 +311,14 @@
                         <li>Sleep Stories</li>
                         <li>Progress Tracking</li>
                     </ul>
+                    <div class="leaderboard-preview">
+                        <div class="leaderboard-title">Top Monk-ness Master</div>
+                        <div class="leaderboard-entry" id="mindfulnessLeader">
+                            <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face" alt="Leader">
+                            <span class="name">Loading...</span>
+                            <span class="value">0</span>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="menu-card" onclick="goToSection('nutrition')">
@@ -281,6 +334,14 @@
                         <li>Dietary Preferences</li>
                         <li>Grocery Lists</li>
                     </ul>
+                    <div class="leaderboard-preview">
+                        <div class="leaderboard-title">Top Nutri Master</div>
+                        <div class="leaderboard-entry" id="nutritionLeader">
+                            <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=40&h=40&fit=crop&crop=face" alt="Leader">
+                            <span class="name">Loading...</span>
+                            <span class="value">0</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -294,6 +355,9 @@
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         
         let currentUser = null;
+        let mindfulnessLeader = null;
+        let nutritionLeader = null;
+        let leaderboardInterval = null;
 
         // Check authentication and load user data
         async function checkAuth() {
@@ -309,12 +373,98 @@
             // Get user profile
             const { data: profile } = await supabase
                 .from('user_profiles')
-                .select('username')
+                .select('username, avatar_url')
                 .eq('id', user.id)
                 .single();
             
             if (profile) {
                 document.getElementById('welcomeText').textContent = `Welcome back, ${profile.username}!`;
+            }
+            
+            // Load leaderboard data
+            loadLeaderboardData();
+        }
+
+        // Load leaderboard data
+        async function loadLeaderboardData() {
+            try {
+                // Get top mindfulness user (by breathing level)
+                const { data: mindfulnessData } = await supabase
+                    .from('user_stats')
+                    .select('breathing_level, user_profiles(username, avatar_url)')
+                    .order('breathing_level', { ascending: false })
+                    .limit(1)
+                    .single();
+                
+                if (mindfulnessData) {
+                    mindfulnessLeader = mindfulnessData;
+                    updateMindfulnessLeader();
+                }
+                
+                // Get top nutrition user (by correct answers)
+                const { data: nutritionData } = await supabase
+                    .from('nutrition_stats')
+                    .select('correct_answers, user_profiles(username, avatar_url)')
+                    .order('correct_answers', { ascending: false })
+                    .limit(1)
+                    .single();
+                
+                if (nutritionData) {
+                    nutritionLeader = nutritionData;
+                    updateNutritionLeader();
+                }
+            } catch (error) {
+                console.error('Error loading leaderboard data:', error);
+            }
+            
+            // Set up interval to rotate leaders (every 5 seconds)
+            leaderboardInterval = setInterval(rotateLeaders, 5000);
+        }
+
+        function updateMindfulnessLeader() {
+            const leaderElement = document.getElementById('mindfulnessLeader');
+            if (mindfulnessLeader && mindfulnessLeader.user_profiles) {
+                leaderElement.innerHTML = `
+                    <img src="${mindfulnessLeader.user_profiles.avatar_url || 'https://www.gravatar.com/avatar/?d=mp'}" alt="Leader">
+                    <span class="name">${mindfulnessLeader.user_profiles.username}</span>
+                    <span class="value">Lvl ${mindfulnessLeader.breathing_level}</span>
+                `;
+            }
+        }
+
+        function updateNutritionLeader() {
+            const leaderElement = document.getElementById('nutritionLeader');
+            if (nutritionLeader && nutritionLeader.user_profiles) {
+                leaderElement.innerHTML = `
+                    <img src="${nutritionLeader.user_profiles.avatar_url || 'https://www.gravatar.com/avatar/?d=mp'}" alt="Leader">
+                    <span class="name">${nutritionLeader.user_profiles.username}</span>
+                    <span class="value">${nutritionLeader.correct_answers} pts</span>
+                `;
+            }
+        }
+
+        function rotateLeaders() {
+            // This function would rotate between different leaderboard metrics
+            // For now, we'll just toggle between two display modes
+            const mindfulnessElement = document.getElementById('mindfulnessLeader');
+            const nutritionElement = document.getElementById('nutritionLeader');
+            
+            if (mindfulnessLeader) {
+                const currentValue = mindfulnessElement.querySelector('.value').textContent;
+                if (currentValue.includes('Lvl')) {
+                    mindfulnessElement.querySelector('.value').textContent = `${mindfulnessLeader.total_minutes || 0} min`;
+                } else {
+                    mindfulnessElement.querySelector('.value').textContent = `Lvl ${mindfulnessLeader.breathing_level}`;
+                }
+            }
+            
+            if (nutritionLeader) {
+                const currentValue = nutritionElement.querySelector('.value').textContent;
+                if (currentValue.includes('pts')) {
+                    nutritionElement.querySelector('.value').textContent = `${nutritionLeader.accuracy || 0}% acc`;
+                } else {
+                    nutritionElement.querySelector('.value').textContent = `${nutritionLeader.correct_answers} pts`;
+                }
             }
         }
 
@@ -337,6 +487,9 @@
 
         // Logout function
         async function logout() {
+            if (leaderboardInterval) {
+                clearInterval(leaderboardInterval);
+            }
             const { error } = await supabase.auth.signOut();
             if (!error) {
                 window.location.href = 'index.html';
