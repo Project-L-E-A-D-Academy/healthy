@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LEAD - Main Menu</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         * {
             margin: 0;
@@ -89,6 +90,7 @@
             padding: 20px;
             text-align: center;
             color: white;
+            position: relative;
         }
 
         .logo {
@@ -109,22 +111,39 @@
             opacity: 0.8;
         }
 
-        .logout-btn {
+        .logout-btn, .leaderboard-btn {
             position: absolute;
             top: 20px;
-            right: 20px;
-            background: rgba(220, 38, 38, 0.8);
-            color: white;
             border: none;
             padding: 10px 20px;
             border-radius: 25px;
             cursor: pointer;
             font-weight: 600;
             transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .logout-btn {
+            right: 20px;
+            background: rgba(220, 38, 38, 0.8);
+            color: white;
         }
 
         .logout-btn:hover {
             background: rgba(220, 38, 38, 1);
+            transform: translateY(-2px);
+        }
+
+        .leaderboard-btn {
+            right: 140px;
+            background: rgba(234, 179, 8, 0.8);
+            color: white;
+        }
+
+        .leaderboard-btn:hover {
+            background: rgba(234, 179, 8, 1);
             transform: translateY(-2px);
         }
 
@@ -272,9 +291,13 @@
                 padding: 30px 20px;
             }
             
-            .logout-btn {
+            .logout-btn, .leaderboard-btn {
                 position: relative;
-                margin-bottom: 20px;
+                margin-bottom: 10px;
+                right: auto;
+                display: block;
+                width: 100%;
+                text-align: center;
             }
         }
     </style>
@@ -289,7 +312,12 @@
     <!-- Main Content -->
     <div class="main-content" id="mainContent">
         <div class="header">
-            <button class="logout-btn" onclick="logout()">Logout</button>
+            <button class="leaderboard-btn" onclick="goToLeaderboard()">
+                <i data-lucide="award"></i> Leaderboards
+            </button>
+            <button class="logout-btn" onclick="logout()">
+                <i data-lucide="log-out"></i> Logout
+            </button>
             <div class="logo">LEAD</div>
             <div class="welcome-text" id="welcomeText">Welcome back!</div>
             <div class="motto">Learn. Empower. Achieve. Dream.</div>
@@ -371,7 +399,7 @@
             // Get user profile
             const { data: profile } = await supabase
                 .from('user_profiles')
-                .select('username')
+                .select('username, avatar_url')
                 .eq('id', user.id)
                 .single();
             
@@ -386,39 +414,65 @@
         // Load leaderboard preview data
         async function loadLeaderPreviews() {
             try {
+                console.log('Loading leader previews...');
+                
                 // Get top mindfulness user
-                const { data: mindfulnessLeader } = await supabase
+                const { data: mindfulnessLeader, error: mindError } = await supabase
                     .from('user_stats')
-                    .select('breathing_level, user_profiles(username, avatar_url)')
+                    .select(`
+                        breathing_level, 
+                        user:user_profiles(
+                            username, 
+                            avatar_url
+                        )
+                    `)
                     .order('breathing_level', { ascending: false })
                     .limit(1)
                     .single();
                 
-                if (mindfulnessLeader) {
-                    document.getElementById('mindfulnessLeaderName').textContent = mindfulnessLeader.user_profiles.username;
+                if (mindError) throw mindError;
+                
+                console.log('Mindfulness leader:', mindfulnessLeader);
+                
+                if (mindfulnessLeader && mindfulnessLeader.user) {
+                    document.getElementById('mindfulnessLeaderName').textContent = mindfulnessLeader.user.username;
                     document.getElementById('mindfulnessLeaderStats').textContent = `Level ${mindfulnessLeader.breathing_level} Master`;
-                    if (mindfulnessLeader.user_profiles.avatar_url) {
-                        document.getElementById('mindfulnessLeaderAvatar').src = mindfulnessLeader.user_profiles.avatar_url;
+                    if (mindfulnessLeader.user.avatar_url) {
+                        document.getElementById('mindfulnessLeaderAvatar').src = mindfulnessLeader.user.avatar_url;
                     }
                 }
                 
                 // Get top nutrition user
-                const { data: nutritionLeader } = await supabase
+                const { data: nutritionLeader, error: nutError } = await supabase
                     .from('nutrition_stats')
-                    .select('correct_answers, user_profiles(username, avatar_url)')
+                    .select(`
+                        correct_answers, 
+                        user:user_profiles(
+                            username, 
+                            avatar_url
+                        )
+                    `)
                     .order('correct_answers', { ascending: false })
                     .limit(1)
                     .single();
                 
-                if (nutritionLeader) {
-                    document.getElementById('nutritionLeaderName').textContent = nutritionLeader.user_profiles.username;
+                if (nutError) throw nutError;
+                
+                console.log('Nutrition leader:', nutritionLeader);
+                
+                if (nutritionLeader && nutritionLeader.user) {
+                    document.getElementById('nutritionLeaderName').textContent = nutritionLeader.user.username;
                     document.getElementById('nutritionLeaderStats').textContent = `${nutritionLeader.correct_answers} correct answers`;
-                    if (nutritionLeader.user_profiles.avatar_url) {
-                        document.getElementById('nutritionLeaderAvatar').src = nutritionLeader.user_profiles.avatar_url;
+                    if (nutritionLeader.user.avatar_url) {
+                        document.getElementById('nutritionLeaderAvatar').src = nutritionLeader.user.avatar_url;
                     }
                 }
+                
             } catch (error) {
                 console.error('Error loading leader previews:', error);
+                // Fallback to default values
+                document.getElementById('mindfulnessLeaderName').textContent = 'No data yet';
+                document.getElementById('nutritionLeaderName').textContent = 'No data yet';
             }
         }
 
@@ -427,6 +481,7 @@
             setTimeout(() => {
                 document.getElementById('loadingScreen').classList.add('hidden');
                 document.getElementById('mainContent').classList.add('visible');
+                lucide.createIcons();
             }, 2000);
         }
 
@@ -436,9 +491,12 @@
                 window.location.href = 'mindfulness.html';
             } else if (section === 'nutrition') {
                 window.location.href = 'nutrition.html';
-            } else if (section === 'leaderboard') {
-                window.location.href = 'leaderboard.html';
             }
+        }
+
+        // Go to leaderboard
+        function goToLeaderboard() {
+            window.location.href = 'leaderboard.html';
         }
 
         // Logout function
