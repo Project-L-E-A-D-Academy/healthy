@@ -183,7 +183,14 @@
         // Get top mindfulness user
         const { data: mindfulnessData, error: mindfulnessError } = await supabase
           .from('user_stats')
-          .select('breathing_level, total_breathing_sessions, meditation_minutes, focus_sessions, user_id, user_profiles(username, avatar_url)')
+          .select(`
+            breathing_level, 
+            total_breathing_sessions, 
+            meditation_minutes, 
+            focus_sessions, 
+            user_id,
+            user_profiles!inner(username, avatar_url)
+          `)
           .order('breathing_level', { ascending: false })
           .limit(1)
           .single();
@@ -205,7 +212,14 @@
         // Get top nutrition user
         const { data: nutritionData, error: nutritionError } = await supabase
           .from('nutrition_stats')
-          .select('correct_answers, wrong_answers, total_answers, accuracy, user_id, user_profiles(username, avatar_url)')
+          .select(`
+            correct_answers, 
+            wrong_answers, 
+            total_answers, 
+            accuracy, 
+            user_id,
+            user_profiles!inner(username, avatar_url)
+          `)
           .order('correct_answers', { ascending: false })
           .limit(1)
           .single();
@@ -605,7 +619,14 @@
         // Fetch mindfulness data from Supabase
         const { data: mindfulnessData, error } = await supabase
           .from('user_stats')
-          .select('breathing_level, total_breathing_sessions, meditation_minutes, focus_sessions, user_id, user_profiles(username, avatar_url)')
+          .select(`
+            breathing_level, 
+            total_breathing_sessions, 
+            meditation_minutes, 
+            focus_sessions, 
+            user_id,
+            user_profiles!inner(username, avatar_url)
+          `)
           .order('breathing_level', { ascending: false })
           .limit(10);
         
@@ -766,7 +787,14 @@
         // Fetch nutrition data from Supabase
         const { data: nutritionData, error } = await supabase
           .from('nutrition_stats')
-          .select('correct_answers, wrong_answers, total_answers, accuracy, user_id, user_profiles(username, avatar_url)')
+          .select(`
+            correct_answers, 
+            wrong_answers, 
+            total_answers, 
+            accuracy, 
+            user_id,
+            user_profiles!inner(username, avatar_url)
+          `)
           .order(state.activeNutritionTab === 'correct' ? 'correct_answers' : 
                 state.activeNutritionTab === 'wrong' ? 'wrong_answers' : 'total_answers', 
                 { ascending: false })
