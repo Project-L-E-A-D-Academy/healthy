@@ -21,12 +21,12 @@
       -moz-user-select: none;
       -ms-user-select: none;
     }
-    .fade-leader {
-      animation: fadeInOut 3s ease-in-out infinite;
-    }
     @keyframes fadeInOut {
-      0%, 100% { opacity: 0.5; transform: scale(0.98); }
-      50% { opacity: 1; transform: scale(1); }
+      0%, 100% { opacity: 0.5; }
+      50% { opacity: 1; }
+    }
+    .fade-animation {
+      animation: fadeInOut 3s ease-in-out infinite;
     }
   </style>
 </head>
@@ -59,8 +59,6 @@
     <!-- Leaderboard Content -->
     <div id="mindfulnessLeaderboard"></div>
     <div id="nutritionLeaderboard" class="hidden"></div>
-
-    <!-- Quiz Modal will be inserted here -->
   </div>
 
   <script>
@@ -74,8 +72,7 @@
 
     // OpenRouter configuration
     const OPENROUTER_API_KEY = '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';
-    const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
-
+    
     // App state
     const state = {
       activeView: 'mindfulness',
@@ -94,7 +91,9 @@
       quizStartTime: null,
       tabSwitchCount: 0,
       isWindowFocused: true,
-      currentUser: null
+      currentUser: null,
+      topMindfulnessUser: null,
+      topNutritionUser: null
     };
 
     // DOM elements
@@ -108,6 +107,7 @@
     // Initialize the app
     async function init() {
       await checkAuth();
+      await fetchTopUsers();
       renderMindfulnessLeaderboard();
       setupEventListeners();
     }
@@ -121,7 +121,7 @@
       }
       state.currentUser = user;
       
-      // Get user grade level
+      // Get user's grade level
       const { data: profile } = await supabase
         .from('user_profiles')
         .select('grade_level')
@@ -130,6 +130,41 @@
       
       if (profile && profile.grade_level) {
         state.userGrade = profile.grade_level.toLowerCase().replace('th', '').replace(' grade', '');
+      }
+    }
+
+    // Fetch top users for each leaderboard
+    async function fetchTopUsers() {
+      // Get top mindfulness user
+      const { data: mindfulnessData } = await supabase
+        .from('user_stats')
+        .select('breathing_level, user_profiles(username, avatar_url)')
+        .order('breathing_level', { ascending: false })
+        .limit(1)
+        .single();
+      
+      if (mindfulnessData) {
+        state.topMindfulnessUser = {
+          name: mindfulnessData.user_profiles.username,
+          avatar: mindfulnessData.user_profiles.avatar_url || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face',
+          breathingLevel: mindfulnessData.breathing_level
+        };
+      }
+
+      // Get top nutrition user
+      const { data: nutritionData } = await supabase
+        .from('nutrition_stats')
+        .select('correct_answers, user_profiles(username, avatar_url)')
+        .order('correct_answers', { ascending: false })
+        .limit(1)
+        .single();
+      
+      if (nutritionData) {
+        state.topNutritionUser = {
+          name: nutritionData.user_profiles.username,
+          avatar: nutritionData.user_profiles.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=40&h=40&fit=crop&crop=face',
+          correctAnswers: nutritionData.correct_answers
+        };
       }
     }
 
@@ -202,17 +237,7 @@
       renderQuiz();
       
       try {
-        // Get user grade level for prompt
-        const gradeLevels = {
-          '6': 'elementary school (6th grade)',
-          '7': 'middle school (7th grade)',
-          '8': 'middle school (8th grade)',
-          '9': 'high school (9th grade)',
-          '10': 'high school (10th grade)'
-        };
-        const gradeDescription = gradeLevels[state.userGrade] || 'middle school';
-        
-        const response = await fetch(OPENROUTER_API_URL, {
+        const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
@@ -224,95 +249,87 @@
             model: 'deepseek/deepseek-r1-0528:free',
             messages: [{
               role: 'system',
-              content: `Generate 5 creative nutrition quiz questions for ${gradeDescription} students. Each question should have:
-- A creative, engaging question that tests practical nutrition knowledge
-- 4 answer options (a, b, c, d)
-- The correct answer (1-4)
-- A brief explanation (2-3 sentences)
-              
-Format as JSON: [{
-  "question": "...",
-  "options": ["...", "...", "...", "..."],
-  "correct": 1,
-  "explanation": "..."
-}]`
+              content: `You are a nutrition quiz generator for ${state.userGrade}th grade students. Create engaging, creative questions that test knowledge of healthy eating, food groups, and nutrition. Each question should have 4 options and include an explanation. Format your response as JSON with question, options, correct (0-3 index), and explanation.`
+            }, {
+              role: 'user',
+              content: `Generate 5 creative nutrition questions appropriate for ${state.userGrade}th grade level.`
             }],
-            response_format: { type: "json_object" }
+            response_format: { type: 'json_object' }
           })
         });
 
         if (!response.ok) {
-          throw new Error(`API request failed with status ${response.status}`);
+          throw new Error('Failed to generate quiz');
         }
 
         const data = await response.json();
-        const questions = JSON.parse(data.choices[0].message.content);
+        const questions = JSON.parse(data.choices[0].message.content).questions;
         
         // Ensure we have valid questions
         if (Array.isArray(questions) {
           state.quizQuestions = questions.slice(0, 5);
         } else {
-          // Fallback to sample questions if API response is unexpected
-          state.quizQuestions = getSampleQuestions().slice(0, 5);
+          // Fallback to sample questions if API fails
+          const gradeQuestions = sampleQuestions[state.userGrade] || sampleQuestions.middle;
+          const shuffled = [...gradeQuestions].sort(() => Math.random() - 0.5);
+          state.quizQuestions = shuffled.slice(0, 5);
         }
       } catch (error) {
         console.error('Error generating quiz:', error);
         // Fallback to sample questions
-        state.quizQuestions = getSampleQuestions().slice(0, 5);
+        const gradeQuestions = sampleQuestions[state.userGrade] || sampleQuestions.middle;
+        const shuffled = [...gradeQuestions].sort(() => Math.random() - 0.5);
+        state.quizQuestions = shuffled.slice(0, 5);
       }
       
       state.isGeneratingQuiz = false;
       renderQuiz();
     }
 
-    // Get sample questions based on grade level
-    function getSampleQuestions() {
-      const sampleQuestions = {
-        elementary: [
-          {
-            question: "Which food group helps build strong bones and teeth?",
-            options: ["Fruits", "Dairy", "Grains", "Vegetables"],
-            correct: 1,
-            explanation: "Dairy products like milk and cheese are rich in calcium, which helps build strong bones and teeth."
-          },
-          {
-            question: "How many food groups are there in a healthy diet?",
-            options: ["3", "4", "5", "6"],
-            correct: 2,
-            explanation: "There are 5 main food groups: fruits, vegetables, grains, protein, and dairy."
-          }
-        ],
-        middle: [
-          {
-            question: "What is the recommended daily intake of water for teenagers?",
-            options: ["4-6 cups", "6-8 cups", "8-10 cups", "10-12 cups"],
-            correct: 2,
-            explanation: "Teenagers should drink 8-10 cups of water daily to stay properly hydrated."
-          },
-          {
-            question: "Which nutrient is the body's main source of energy?",
-            options: ["Protein", "Fat", "Carbohydrates", "Vitamins"],
-            correct: 2,
-            explanation: "Carbohydrates are the body's preferred source of energy for daily activities."
-          }
-        ],
-        high: [
-          {
-            question: "What is the difference between saturated and unsaturated fats?",
-            options: [
-              "Saturated fats are liquid at room temperature",
-              "Unsaturated fats are solid at room temperature", 
-              "Saturated fats are solid at room temperature",
-              "There is no difference"
-            ],
-            correct: 2,
-            explanation: "Saturated fats are typically solid at room temperature (like butter), while unsaturated fats are liquid (like olive oil)."
-          }
-        ]
-      };
-      
-      return sampleQuestions[state.userGrade] || sampleQuestions.middle;
-    }
+    // Sample nutrition questions by grade level (fallback)
+    const sampleQuestions = {
+      elementary: [
+        {
+          question: "Which food group helps build strong bones and teeth?",
+          options: ["Fruits", "Dairy", "Grains", "Vegetables"],
+          correct: 1,
+          explanation: "Dairy products like milk and cheese are rich in calcium, which helps build strong bones and teeth."
+        },
+        {
+          question: "How many food groups are there in a healthy diet?",
+          options: ["3", "4", "5", "6"],
+          correct: 2,
+          explanation: "There are 5 main food groups: fruits, vegetables, grains, protein, and dairy."
+        }
+      ],
+      middle: [
+        {
+          question: "What is the recommended daily intake of water for teenagers?",
+          options: ["4-6 cups", "6-8 cups", "8-10 cups", "10-12 cups"],
+          correct: 2,
+          explanation: "Teenagers should drink 8-10 cups of water daily to stay properly hydrated."
+        },
+        {
+          question: "Which nutrient is the body's main source of energy?",
+          options: ["Protein", "Fat", "Carbohydrates", "Vitamins"],
+          correct: 2,
+          explanation: "Carbohydrates are the body's preferred source of energy for daily activities."
+        }
+      ],
+      high: [
+        {
+          question: "What is the difference between saturated and unsaturated fats?",
+          options: [
+            "Saturated fats are liquid at room temperature",
+            "Unsaturated fats are solid at room temperature", 
+            "Saturated fats are solid at room temperature",
+            "There is no difference"
+          ],
+          correct: 2,
+          explanation: "Saturated fats are typically solid at room temperature (like butter), while unsaturated fats are liquid (like olive oil)."
+        }
+      ]
+    };
 
     // Start quiz
     function startQuiz() {
@@ -344,22 +361,49 @@ Format as JSON: [{
         state.selectedAnswer = null;
       } else {
         state.showResult = true;
+        saveQuizResults();
       }
       
       renderQuiz();
     }
 
-    // Reset quiz
-    function resetQuiz() {
-      state.showQuiz = false;
-      state.currentQuestion = 0;
-      state.selectedAnswer = null;
-      state.showResult = false;
-      state.score = 0;
-      state.quizQuestions = [];
-      resetAntiCheatStates();
-      removeAntiCheatListeners();
-      renderQuiz();
+    // Save quiz results to Supabase
+    async function saveQuizResults() {
+      if (!state.currentUser) return;
+      
+      try {
+        // Get current stats
+        const { data: currentStats } = await supabase
+          .from('nutrition_stats')
+          .select('*')
+          .eq('user_id', state.currentUser.id)
+          .single();
+        
+        // Calculate new values
+        const correctAnswers = (currentStats?.correct_answers || 0) + state.score;
+        const wrongAnswers = (currentStats?.wrong_answers || 0) + (state.quizQuestions.length - state.score);
+        const totalAnswers = correctAnswers + wrongAnswers;
+        const accuracy = Math.round((correctAnswers / totalAnswers) * 100);
+        
+        // Update or insert stats
+        const { error } = await supabase
+          .from('nutrition_stats')
+          .upsert({
+            user_id: state.currentUser.id,
+            correct_answers: correctAnswers,
+            wrong_answers: wrongAnswers,
+            total_answers: totalAnswers,
+            accuracy: accuracy,
+            last_quiz_date: new Date().toISOString()
+          });
+        
+        if (error) throw error;
+        
+        // Refresh top users
+        await fetchTopUsers();
+      } catch (error) {
+        console.error('Error saving quiz results:', error);
+      }
     }
 
     // Set up anti-cheat listeners
@@ -490,255 +534,208 @@ Format as JSON: [{
 
     // Render mindfulness leaderboard
     async function renderMindfulnessLeaderboard() {
-      try {
-        // Get mindfulness data from Supabase
-        const { data: mindfulnessData, error } = await supabase
-          .from('user_stats')
-          .select(`
-            breathing_level,
-            total_minutes,
-            user_profiles (
-              username,
-              avatar_url
-            )
-          `)
-          .order('breathing_level', { ascending: false })
-          .limit(5);
-        
-        if (error) throw error;
-        
-        const sortedByBreathing = mindfulnessData || [];
-        const sortedByAverage = [...sortedByBreathing].sort((a, b) => 
-          (b.total_minutes / (b.total_sessions || 1)) - (a.total_minutes / (a.total_sessions || 1)));
-        
-        const currentData = state.activeMindfulnessTab === 'breathing' ? sortedByBreathing : sortedByAverage;
-        const title = state.activeMindfulnessTab === 'breathing' ? 'Breathing Level' : 'Average Session';
-        const icon = state.activeMindfulnessTab === 'breathing' ? '<i data-lucide="brain" class="w-5 h-5"></i>' : '<i data-lucide="clock" class="w-5 h-5"></i>';
+      // Fetch mindfulness data from Supabase
+      const { data: mindfulnessData } = await supabase
+        .from('user_stats')
+        .select('breathing_level, total_breathing_sessions, user_profiles(username, avatar_url)')
+        .order('breathing_level', { ascending: false })
+        .limit(5);
+      
+      const currentData = mindfulnessData || [];
+      
+      const html = `
+        <div class="space-y-6">
+          <div class="flex space-x-1 bg-slate-100 p-1 rounded-lg">
+            <button
+              onclick="state.activeMindfulnessTab = 'breathing'; renderMindfulnessLeaderboard();"
+              class="flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+                state.activeMindfulnessTab === 'breathing' 
+                  ? 'bg-white text-blue-600 shadow-sm' 
+                  : 'text-slate-600 hover:text-slate-900'
+              }"
+            >
+              <i data-lucide="brain" class="w-4 h-4 inline mr-2"></i>
+              Breathing Level
+            </button>
+          </div>
 
-        const html = `
-          <div class="space-y-6">
-            <div class="flex space-x-1 bg-slate-100 p-1 rounded-lg">
-              <button
-                onclick="state.activeMindfulnessTab = 'breathing'; renderMindfulnessLeaderboard();"
-                class="flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-                  state.activeMindfulnessTab === 'breathing' 
-                    ? 'bg-white text-blue-600 shadow-sm' 
-                    : 'text-slate-600 hover:text-slate-900'
-                }"
-              >
-                <i data-lucide="brain" class="w-4 h-4 inline mr-2"></i>
-                Breathing Level
-              </button>
-              <button
-                onclick="state.activeMindfulnessTab = 'average'; renderMindfulnessLeaderboard();"
-                class="flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-                  state.activeMindfulnessTab === 'average' 
-                    ? 'bg-white text-blue-600 shadow-sm' 
-                    : 'text-slate-600 hover:text-slate-900'
-                }"
-              >
-                <i data-lucide="clock" class="w-4 h-4 inline mr-2"></i>
-                Average Session
-              </button>
-            </div>
-
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200">
-              <div class="p-6 border-b border-slate-200">
-                <div class="flex items-center space-x-2">
-                  ${icon}
-                  <h3 class="text-lg font-semibold text-slate-900">Top ${title} Masters</h3>
-                </div>
+          <div class="bg-white rounded-xl shadow-sm border border-slate-200">
+            <div class="p-6 border-b border-slate-200">
+              <div class="flex items-center space-x-2">
+                <i data-lucide="brain" class="w-5 h-5"></i>
+                <h3 class="text-lg font-semibold text-slate-900">Top Breathing Masters</h3>
               </div>
-              
-              <div class="p-6">
-                <div class="space-y-4">
-                  ${currentData.map((user, index) => `
-                    <div key="${user.user_profiles.username}" class="flex items-center justify-between p-4 rounded-lg border-2 ${getRankBg(index + 1)} ${index === 0 ? 'fade-leader' : ''}">
-                      <div class="flex items-center space-x-4">
-                        ${getRankIcon(index + 1)}
-                        <img 
-                          src="${user.user_profiles.avatar_url || 'https://www.gravatar.com/avatar/?d=mp'}" 
-                          alt="${user.user_profiles.username}"
-                          class="w-12 h-12 rounded-full object-cover border-2 border-white shadow-sm"
-                        />
-                        <div>
-                          <h4 class="font-semibold text-slate-900">${user.user_profiles.username}</h4>
-                          <div class="flex items-center space-x-4 text-sm text-slate-600">
-                            <span class="flex items-center">
-                              <i data-lucide="clock" class="w-4 h-4 mr-1"></i>
-                              ${user.total_minutes || 0} min
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div class="text-right">
-                        <div class="text-2xl font-bold text-slate-900">
-                          ${state.activeMindfulnessTab === 'breathing' ? user.breathing_level : `${Math.round(user.total_minutes / 10) || 0}m`}
-                        </div>
-                        <div class="text-sm text-slate-500">
-                          ${state.activeMindfulnessTab === 'breathing' ? 'Level' : 'avg/session'}
+            </div>
+            
+            <div class="p-6">
+              <div class="space-y-4">
+                ${currentData.map((user, index) => `
+                  <div key="${user.user_profiles.username}" class="flex items-center justify-between p-4 rounded-lg border-2 ${getRankBg(index + 1)}">
+                    <div class="flex items-center space-x-4">
+                      ${getRankIcon(index + 1)}
+                      <img 
+                        src="${user.user_profiles.avatar_url || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face'}" 
+                        alt="${user.user_profiles.username}"
+                        class="w-12 h-12 rounded-full object-cover border-2 border-white shadow-sm"
+                      />
+                      <div>
+                        <h4 class="font-semibold text-slate-900">${user.user_profiles.username}</h4>
+                        <div class="flex items-center space-x-4 text-sm text-slate-600">
+                          <span class="flex items-center">
+                            <i data-lucide="calendar" class="w-4 h-4 mr-1"></i>
+                            ${user.total_breathing_sessions || 0} sessions
+                          </span>
                         </div>
                       </div>
                     </div>
-                  `).join('')}
-                </div>
+                    
+                    <div class="text-right">
+                      <div class="text-2xl font-bold text-slate-900">
+                        ${user.breathing_level || 1}
+                      </div>
+                      <div class="text-sm text-slate-500">
+                        Level
+                      </div>
+                    </div>
+                  </div>
+                `).join('')}
               </div>
             </div>
           </div>
-        `;
+        </div>
+      `;
 
-        elements.mindfulnessLeaderboard.innerHTML = html;
-        lucide.createIcons();
-      } catch (error) {
-        console.error('Error rendering mindfulness leaderboard:', error);
-        elements.mindfulnessLeaderboard.innerHTML = '<p class="text-center text-red-500">Error loading leaderboard data</p>';
-      }
+      elements.mindfulnessLeaderboard.innerHTML = html;
+      lucide.createIcons();
     }
 
     // Render nutrition leaderboard
     async function renderNutritionLeaderboard() {
-      try {
-        // Get nutrition data from Supabase
-        const { data: nutritionData, error } = await supabase
-          .from('nutrition_stats')
-          .select(`
-            correct_answers,
-            wrong_answers,
-            total_answers,
-            accuracy,
-            user_profiles (
-              username,
-              avatar_url
-            )
-          `)
-          .order(state.activeNutritionTab === 'correct' ? 'correct_answers' : 
-                state.activeNutritionTab === 'wrong' ? 'wrong_answers' : 'total_answers', 
-                { ascending: false })
-          .limit(5);
-        
-        if (error) throw error;
-        
-        let currentData = nutritionData || [];
-        let title, icon, valueKey, valueLabel;
-        
-        switch(state.activeNutritionTab) {
-          case 'correct':
-            title = 'Most Correct Answers';
-            icon = '<i data-lucide="check-circle" class="w-5 h-5 text-green-600"></i>';
-            valueKey = 'correct_answers';
-            valueLabel = 'correct';
-            break;
-          case 'wrong':
-            title = 'Most Wrong Answers';
-            icon = '<i data-lucide="x-circle" class="w-5 h-5 text-red-600"></i>';
-            valueKey = 'wrong_answers';
-            valueLabel = 'wrong';
-            break;
-          case 'total':
-            title = 'Most Active Learners';
-            icon = '<i data-lucide="users" class="w-5 h-5 text-blue-600"></i>';
-            valueKey = 'total_answers';
-            valueLabel = 'total';
-            break;
-        }
+      // Fetch nutrition data from Supabase
+      const { data: nutritionData } = await supabase
+        .from('nutrition_stats')
+        .select('correct_answers, wrong_answers, total_answers, accuracy, user_profiles(username, avatar_url)')
+        .order(state.activeNutritionTab === 'correct' ? 'correct_answers' : 
+              state.activeNutritionTab === 'wrong' ? 'wrong_answers' : 'total_answers', 
+              { ascending: false })
+        .limit(5);
+      
+      const currentData = nutritionData || [];
+      let title, icon, valueKey, valueLabel;
+      
+      switch(state.activeNutritionTab) {
+        case 'correct':
+          title = 'Most Correct Answers';
+          icon = '<i data-lucide="check-circle" class="w-5 h-5 text-green-600"></i>';
+          valueKey = 'correct_answers';
+          valueLabel = 'correct';
+          break;
+        case 'wrong':
+          title = 'Most Wrong Answers';
+          icon = '<i data-lucide="x-circle" class="w-5 h-5 text-red-600"></i>';
+          valueKey = 'wrong_answers';
+          valueLabel = 'wrong';
+          break;
+        case 'total':
+          title = 'Most Active Learners';
+          icon = '<i data-lucide="users" class="w-5 h-5 text-blue-600"></i>';
+          valueKey = 'total_answers';
+          valueLabel = 'total';
+          break;
+      }
 
-        const html = `
-          <div class="space-y-6">
-            <div class="flex space-x-1 bg-slate-100 p-1 rounded-lg">
+      const html = `
+        <div class="space-y-6">
+          <div class="flex space-x-1 bg-slate-100 p-1 rounded-lg">
+            <button
+              onclick="state.activeNutritionTab = 'correct'; renderNutritionLeaderboard();"
+              class="flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors ${
+                state.activeNutritionTab === 'correct' 
+                  ? 'bg-white text-green-600 shadow-sm' 
+                  : 'text-slate-600 hover:text-slate-900'
+              }"
+            >
+              <i data-lucide="check-circle" class="w-4 h-4 inline mr-1"></i>
+              Most Correct
+            </button>
+            <button
+              onclick="state.activeNutritionTab = 'wrong'; renderNutritionLeaderboard();"
+              class="flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors ${
+                state.activeNutritionTab === 'wrong' 
+                  ? 'bg-white text-red-600 shadow-sm' 
+                  : 'text-slate-600 hover:text-slate-900'
+              }"
+            >
+              <i data-lucide="x-circle" class="w-4 h-4 inline mr-1"></i>
+              Most Wrong
+            </button>
+            <button
+              onclick="state.activeNutritionTab = 'total'; renderNutritionLeaderboard();"
+              class="flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors ${
+                state.activeNutritionTab === 'total' 
+                  ? 'bg-white text-blue-600 shadow-sm' 
+                  : 'text-slate-600 hover:text-slate-900'
+              }"
+            >
+              <i data-lucide="users" class="w-4 h-4 inline mr-1"></i>
+              Most Active
+            </button>
+          </div>
+
+          <div class="bg-white rounded-xl shadow-sm border border-slate-200">
+            <div class="p-6 border-b border-slate-200 flex items-center justify-between">
+              <div class="flex items-center space-x-2">
+                ${icon}
+                <h3 class="text-lg font-semibold text-slate-900">${title}</h3>
+              </div>
               <button
-                onclick="state.activeNutritionTab = 'correct'; renderNutritionLeaderboard();"
-                class="flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors ${
-                  state.activeNutritionTab === 'correct' 
-                    ? 'bg-white text-green-600 shadow-sm' 
-                    : 'text-slate-600 hover:text-slate-900'
-                }"
+                onclick="startQuiz()"
+                class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center space-x-2"
               >
-                <i data-lucide="check-circle" class="w-4 h-4 inline mr-1"></i>
-                Most Correct
-              </button>
-              <button
-                onclick="state.activeNutritionTab = 'wrong'; renderNutritionLeaderboard();"
-                class="flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors ${
-                  state.activeNutritionTab === 'wrong' 
-                    ? 'bg-white text-red-600 shadow-sm' 
-                    : 'text-slate-600 hover:text-slate-900'
-                }"
-              >
-                <i data-lucide="x-circle" class="w-4 h-4 inline mr-1"></i>
-                Most Wrong
-              </button>
-              <button
-                onclick="state.activeNutritionTab = 'total'; renderNutritionLeaderboard();"
-                class="flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors ${
-                  state.activeNutritionTab === 'total' 
-                    ? 'bg-white text-blue-600 shadow-sm' 
-                    : 'text-slate-600 hover:text-slate-900'
-                }"
-              >
-                <i data-lucide="users" class="w-4 h-4 inline mr-1"></i>
-                Most Active
+                <i data-lucide="play" class="w-4 h-4"></i>
+                <span>Take Quiz</span>
               </button>
             </div>
-
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200">
-              <div class="p-6 border-b border-slate-200 flex items-center justify-between">
-                <div class="flex items-center space-x-2">
-                  ${icon}
-                  <h3 class="text-lg font-semibold text-slate-900">${title}</h3>
-                </div>
-                <button
-                  onclick="startQuiz()"
-                  class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center space-x-2"
-                >
-                  <i data-lucide="play" class="w-4 h-4"></i>
-                  <span>Take Quiz</span>
-                </button>
-              </div>
-              
-              <div class="p-6">
-                <div class="space-y-4">
-                  ${currentData.map((user, index) => `
-                    <div key="${user.user_profiles.username}" class="flex items-center justify-between p-4 rounded-lg border-2 ${getRankBg(index + 1)} ${index === 0 ? 'fade-leader' : ''}">
-                      <div class="flex items-center space-x-4">
-                        ${getRankIcon(index + 1)}
-                        <img 
-                          src="${user.user_profiles.avatar_url || 'https://www.gravatar.com/avatar/?d=mp'}" 
-                          alt="${user.user_profiles.username}"
-                          class="w-12 h-12 rounded-full object-cover border-2 border-white shadow-sm"
-                        />
-                        <div>
-                          <h4 class="font-semibold text-slate-900">${user.user_profiles.username}</h4>
-                          <div class="flex items-center space-x-4 text-sm text-slate-600">
-                            <span class="text-green-600">✓ ${user.correct_answers || 0}</span>
-                            <span class="text-red-600">✗ ${user.wrong_answers || 0}</span>
-                            <span class="text-blue-600">${user.accuracy || 0}% accuracy</span>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div class="text-right">
-                        <div class="text-2xl font-bold text-slate-900">
-                          ${user[valueKey] || 0}
-                        </div>
-                        <div class="text-sm text-slate-500">
-                          ${valueLabel}
+            
+            <div class="p-6">
+              <div class="space-y-4">
+                ${currentData.map((user, index) => `
+                  <div key="${user.user_profiles.username}" class="flex items-center justify-between p-4 rounded-lg border-2 ${getRankBg(index + 1)}">
+                    <div class="flex items-center space-x-4">
+                      ${getRankIcon(index + 1)}
+                      <img 
+                        src="${user.user_profiles.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=40&h=40&fit=crop&crop=face'}" 
+                        alt="${user.user_profiles.username}"
+                        class="w-12 h-12 rounded-full object-cover border-2 border-white shadow-sm"
+                      />
+                      <div>
+                        <h4 class="font-semibold text-slate-900">${user.user_profiles.username}</h4>
+                        <div class="flex items-center space-x-4 text-sm text-slate-600">
+                          <span class="text-green-600">✓ ${user.correct_answers || 0}</span>
+                          <span class="text-red-600">✗ ${user.wrong_answers || 0}</span>
+                          <span class="text-blue-600">${user.accuracy || 0}% accuracy</span>
                         </div>
                       </div>
                     </div>
-                  `).join('')}
-                </div>
+                    
+                    <div class="text-right">
+                      <div class="text-2xl font-bold text-slate-900">
+                        ${user[valueKey] || 0}
+                      </div>
+                      <div class="text-sm text-slate-500">
+                        ${valueLabel}
+                      </div>
+                    </div>
+                  </div>
+                `).join('')}
               </div>
             </div>
           </div>
-        `;
+        </div>
+      `;
 
-        elements.nutritionLeaderboard.innerHTML = html;
-        lucide.createIcons();
-      } catch (error) {
-        console.error('Error rendering nutrition leaderboard:', error);
-        elements.nutritionLeaderboard.innerHTML = '<p class="text-center text-red-500">Error loading leaderboard data</p>';
-      }
+      elements.nutritionLeaderboard.innerHTML = html;
+      lucide.createIcons();
     }
 
     // Render quiz
@@ -783,7 +780,7 @@ Format as JSON: [{
               <p class="text-lg opacity-80">Quiz will resume automatically...</p>
               <div class="mt-6">
                 <div class="text-red-400 text-sm">
-                  • Tab switches: ${state.tabSwitchCount}
+                  • Tab switches: ${state.tabSwitchCount}<br>
                   • Suspicious actions: ${state.suspiciousActivity}
                 </div>
               </div>
@@ -806,11 +803,6 @@ Format as JSON: [{
         const avgTimePerQuestion = totalTime / state.quizQuestions.length;
         const integrityScore = Math.max(0, 100 - (state.suspiciousActivity * 10) - (state.tabSwitchCount * 15));
         const isValidScore = integrityScore >= 50 && avgTimePerQuestion >= 10;
-        
-        // Only save results if quiz was completed with integrity
-        if (isValidScore && state.score > 0) {
-          saveQuizResults();
-        }
         
         const html = `
           <div id="quizModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -871,7 +863,7 @@ Format as JSON: [{
         return;
       }
 
-      if (!state.quizQuestions.length) return null;
+      if (!state.quizQuestions.length) return;
 
       const question = state.quizQuestions[state.currentQuestion];
 
@@ -942,7 +934,7 @@ Format as JSON: [{
                           ? 'border-blue-500 bg-blue-500 text-white'
                           : 'border-slate-300'
                       }">
-                        ${state.selectedAnswer === index && '✓'}
+                        ${state.selectedAnswer === index ? '✓' : ''}
                       </div>
                       <span>${option}</span>
                     </div>
@@ -960,7 +952,7 @@ Format as JSON: [{
               </button>
               <button
                 onclick="handleNextQuestion()"
-                disabled="${state.selectedAnswer === null}"
+                ${state.selectedAnswer === null ? 'disabled' : ''}
                 class="px-6 py-3 rounded-lg font-medium transition-colors flex items-center space-x-2 ${
                   state.selectedAnswer !== null
                     ? 'bg-blue-600 hover:bg-blue-700 text-white'
@@ -984,44 +976,17 @@ Format as JSON: [{
       lucide.createIcons();
     }
 
-    // Save quiz results to Supabase
-    async function saveQuizResults() {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
-
-        // Get current stats
-        const { data: currentStats } = await supabase
-          .from('nutrition_stats')
-          .select('*')
-          .eq('user_id', user.id)
-          .single();
-
-        // Calculate new values
-        const correctAnswers = (currentStats?.correct_answers || 0) + state.score;
-        const wrongAnswers = (currentStats?.wrong_answers || 0) + (state.quizQuestions.length - state.score);
-        const totalAnswers = correctAnswers + wrongAnswers;
-        const accuracy = Math.round((correctAnswers / totalAnswers) * 100);
-
-        // Upsert stats
-        const { error } = await supabase
-          .from('nutrition_stats')
-          .upsert({
-            user_id: user.id,
-            correct_answers: correctAnswers,
-            wrong_answers: wrongAnswers,
-            total_answers: totalAnswers,
-            accuracy: accuracy,
-            last_quiz_date: new Date().toISOString()
-          });
-
-        if (error) throw error;
-
-        // Refresh leaderboard
-        renderNutritionLeaderboard();
-      } catch (error) {
-        console.error('Error saving quiz results:', error);
-      }
+    // Reset quiz
+    function resetQuiz() {
+      state.showQuiz = false;
+      state.currentQuestion = 0;
+      state.selectedAnswer = null;
+      state.showResult = false;
+      state.score = 0;
+      state.quizQuestions = [];
+      resetAntiCheatStates();
+      removeAntiCheatListeners();
+      renderQuiz();
     }
 
     // Initialize the app
@@ -1032,8 +997,7 @@ Format as JSON: [{
     window.handleAnswerSelect = handleAnswerSelect;
     window.handleNextQuestion = handleNextQuestion;
     window.resetQuiz = resetQuiz;
-    window.renderMindfulnessLeaderboard = renderMindfulnessLeaderboard;
-    window.renderNutritionLeaderboard = renderNutritionLeaderboard;
+    window.state = state;
   </script>
 </body>
 </html>
