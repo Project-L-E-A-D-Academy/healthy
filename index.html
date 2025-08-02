@@ -6,6 +6,7 @@
   <title>LEAD - Learn. Empower. Achieve. Dream.</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
+    /* --- same styles as before --- */
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: 'Arial', sans-serif;
@@ -94,32 +95,28 @@
     }
     .signup-fields { display: none; }
     .signup-fields.active { display: block; }
+    .avatar-preview {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin: 10px auto;
+      border: 3px solid #e5e7eb;
+      display: none;
+    }
     .avatar-upload {
       display: flex;
       flex-direction: column;
       align-items: center;
-      margin-bottom: 20px;
-    }
-    .avatar-preview {
-      width: 100px;
-      height: 100px;
-      border-radius: 50%;
-      object-fit: cover;
-      border: 3px solid #e5e7eb;
-      margin-bottom: 10px;
     }
     .avatar-upload-btn {
-      background: #f3f4f6;
-      color: #4b5563;
-      border: none;
+      background: #e5e7eb;
+      color: #374151;
       padding: 8px 16px;
       border-radius: 20px;
-      cursor: pointer;
       font-size: 14px;
-      transition: background 0.3s;
-    }
-    .avatar-upload-btn:hover {
-      background: #e5e7eb;
+      cursor: pointer;
+      margin-top: 10px;
     }
   </style>
 </head>
@@ -139,15 +136,20 @@
       </div>
 
       <div class="signup-fields" id="signupFields">
-        <div class="avatar-upload">
-          <img id="avatarPreview" src="https://www.gravatar.com/avatar/?d=mp" class="avatar-preview" alt="Avatar Preview">
-          <button type="button" class="avatar-upload-btn" id="avatarUploadBtn">Upload Profile Picture</button>
-          <input type="file" id="avatarInput" accept="image/*" style="display: none;">
-        </div>
         <div class="form-group">
           <label for="username">Username</label>
           <input type="text" id="username" />
         </div>
+        
+        <div class="form-group avatar-upload">
+          <label>Profile Picture</label>
+          <img id="avatarPreview" class="avatar-preview" />
+          <input type="file" id="avatarInput" accept="image/*" style="display: none;" />
+          <button type="button" class="avatar-upload-btn" onclick="document.getElementById('avatarInput').click()">
+            Upload Photo
+          </button>
+        </div>
+        
         <div class="form-group">
           <label for="birthday">Birthday</label>
           <input type="date" id="birthday" />
@@ -193,20 +195,16 @@
     const toggleLink = document.getElementById('toggleLink');
     const avatarInput = document.getElementById('avatarInput');
     const avatarPreview = document.getElementById('avatarPreview');
-    const avatarUploadBtn = document.getElementById('avatarUploadBtn');
 
     // Handle avatar upload
-    avatarUploadBtn.addEventListener('click', () => {
-      avatarInput.click();
-    });
-
-    avatarInput.addEventListener('change', (e) => {
-      const file = e.target.files[0];
+    avatarInput.addEventListener('change', (event) => {
+      const file = event.target.files[0];
       if (file) {
         avatarFile = file;
         const reader = new FileReader();
-        reader.onload = (event) => {
-          avatarPreview.src = event.target.result;
+        reader.onload = (e) => {
+          avatarPreview.src = e.target.result;
+          avatarPreview.style.display = 'block';
         };
         reader.readAsDataURL(file);
       }
@@ -244,21 +242,21 @@
       const fileExt = avatarFile.name.split('.').pop();
       const fileName = `${userId}-${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
       const filePath = `avatars/${fileName}`;
-
+      
       const { data, error } = await supabase.storage
         .from('avatars')
         .upload(filePath, avatarFile);
-
+      
       if (error) {
         console.error('Error uploading avatar:', error);
         return null;
       }
-
+      
       // Get public URL
       const { data: { publicUrl } } = supabase.storage
         .from('avatars')
         .getPublicUrl(filePath);
-
+      
       return publicUrl;
     }
 
@@ -278,6 +276,7 @@
             return;
           }
 
+          // First create auth user
           const { data: { user }, error: signUpError } = await supabase.auth.signUp({
             email: email,
             password: password
@@ -289,10 +288,7 @@
           }
 
           // Upload avatar if provided
-          let avatarUrl = null;
-          if (avatarFile) {
-            avatarUrl = await uploadAvatar(user.id);
-          }
+          const avatarUrl = await uploadAvatar(user.id);
 
           // Create user profile
           const { error: profileError } = await supabase
@@ -300,9 +296,9 @@
             .insert([{
               id: user.id,
               username,
+              avatar_url: avatarUrl,
               birthday,
-              grade_level: gradeLevel,
-              avatar_url: avatarUrl
+              grade_level: gradeLevel
             }]);
 
           if (profileError) {
