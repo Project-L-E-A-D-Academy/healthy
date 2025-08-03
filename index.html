@@ -5,96 +5,226 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>LEAD - Learn. Empower. Achieve. Dream.</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Poppins:wght@300;400;500;600&family=Playfair+Display:wght@500;600&display=swap" rel="stylesheet">
   <style>
-    /* --- same styles as before --- */
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    * { 
+      margin: 0; 
+      padding: 0; 
+      box-sizing: border-box; 
+    }
+    
     body {
-      font-family: 'Arial', sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      font-family: 'Poppins', sans-serif;
+      background-color: #FFFFFF;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400' viewBox='0 0 800 800'%3E%3Cg fill='none' stroke='%23C60000' stroke-width='1'%3E%3Cpath d='M769 229L1037 260.9M927 880L731 737 520 660 309 538 40 599 295 764 126.5 879.5 40 599-197 493 102 382-31 229 126.5 79.5-69-63'/%3E%3Cpath d='M-31 229L237 261 390 382 603 493 308.5 537.5 101.5 381.5M370 905L295 764'/%3E%3Cpath d='M520 660L578 842 731 737 840 599 603 493 520 660 295 764 309 538 390 382 539 269 769 229 577.5 41.5 370 105 295 -36 126.5 79.5 237 261 102 382 40 599 -69 737 127 880'/%3E%3Cpath d='M520-140L578.5 42.5 731-63M603 493L539 269 237 261 370 105M902 382L539 269M390 382L102 382'/%3E%3Cpath d='M-222 42L126.5 79.5 370 105 539 269 577.5 41.5 927 80 769 229 902 382 603 493 731 737M295-36L577.5 41.5M578 842L295 764M40-201L127 80M102 382L-261 269'/%3E%3C/g%3E%3Cg fill='%239F0000'%3E%3Ccircle cx='769' cy='229' r='5'/%3E%3Ccircle cx='539' cy='269' r='5'/%3E%3Ccircle cx='603' cy='493' r='5'/%3E%3Ccircle cx='731' cy='737' r='5'/%3E%3Ccircle cx='520' cy='660' r='5'/%3E%3Ccircle cx='309' cy='538' r='5'/%3E%3Ccircle cx='295' cy='764' r='5'/%3E%3Ccircle cx='40' cy='599' r='5'/%3E%3Ccircle cx='102' cy='382' r='5'/%3E%3Ccircle cx='127' cy='80' r='5'/%3E%3Ccircle cx='370' cy='105' r='5'/%3E%3Ccircle cx='578' cy='42' r='5'/%3E%3Ccircle cx='237' cy='261' r='5'/%3E%3Ccircle cx='390' cy='382' r='5'/%3E%3C/g%3E%3C/svg%3E");
       min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
+      animation: bgMove 120s linear infinite;
     }
+    
+    @keyframes bgMove {
+      0% { background-position: 0% 0%; }
+      50% { background-position: 100% 100%; }
+      100% { background-position: 0% 0%; }
+    }
+    
     .auth-container {
       background: rgba(255, 255, 255, 0.95);
       padding: 40px;
       border-radius: 20px;
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
       width: 100%;
       max-width: 400px;
       text-align: center;
+      transform: translateY(0);
+      transition: all 0.4s ease;
+      animation: fadeIn 0.8s ease-out;
+      backdrop-filter: blur(5px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
     }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .auth-container:hover {
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+      transform: translateY(-5px);
+    }
+    
     .logo {
-      font-size: 48px;
+      font-size: 64px;
       font-weight: bold;
       color: #dc2626;
       margin-bottom: 10px;
       text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+      font-family: 'Dancing Script', cursive;
+      background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: pulse 2s infinite alternate;
     }
+    
+    @keyframes pulse {
+      from { transform: scale(1); }
+      to { transform: scale(1.05); }
+    }
+    
     .motto {
       color: #6b7280;
       margin-bottom: 30px;
-      font-size: 14px;
+      font-size: 16px;
+      font-family: 'Playfair Display', serif;
+      font-weight: 500;
+      letter-spacing: 0.5px;
     }
+    
+    .motto span {
+      font-family: 'Playfair Display', serif;
+      color: #dc2626;
+      font-weight: 600;
+    }
+    
     .form-group {
       margin-bottom: 20px;
       text-align: left;
+      position: relative;
     }
+    
     label {
       display: block;
-      margin-bottom: 5px;
+      margin-bottom: 8px;
       color: #374151;
       font-weight: 500;
+      font-size: 14px;
+      transition: all 0.3s ease;
     }
+    
     input, select {
       width: 100%;
-      padding: 12px;
+      padding: 14px;
       border: 2px solid #e5e7eb;
-      border-radius: 8px;
+      border-radius: 10px;
       font-size: 16px;
-      transition: border-color 0.3s;
+      transition: all 0.3s ease;
+      background: rgba(255, 255, 255, 0.8);
+      font-family: 'Poppins', sans-serif;
     }
+    
     input:focus, select:focus {
       outline: none;
       border-color: #dc2626;
+      box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.2);
     }
+    
     .btn {
       width: 100%;
-      padding: 12px;
-      background: #dc2626;
+      padding: 14px;
+      background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
       color: white;
       border: none;
-      border-radius: 8px;
+      border-radius: 10px;
       font-size: 16px;
       font-weight: 600;
       cursor: pointer;
-      transition: background 0.3s;
+      transition: all 0.3s ease;
       margin-bottom: 10px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     }
-    .btn:hover { background: #b91c1c; }
+    
+    .btn:hover { 
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    }
+    
+    .btn:active {
+      transform: translateY(0);
+    }
+    
+    .btn::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: 0.5s;
+    }
+    
+    .btn:hover::after {
+      left: 100%;
+    }
+    
     .btn-secondary {
       background: transparent;
       color: #dc2626;
       border: 2px solid #dc2626;
     }
+    
     .btn-secondary:hover {
       background: #dc2626;
       color: white;
     }
-    .error { color: #dc2626; font-size: 14px; margin-top: 10px; }
-    .success { color: #059669; font-size: 14px; margin-top: 10px; }
+    
+    .error { 
+      color: #dc2626; 
+      font-size: 14px; 
+      margin-top: 10px; 
+      animation: shake 0.5s;
+    }
+    
+    .success { 
+      color: #059669; 
+      font-size: 14px; 
+      margin-top: 10px; 
+      animation: fadeIn 0.5s;
+    }
+    
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-5px); }
+      40%, 80% { transform: translateX(5px); }
+    }
+    
     .form-toggle {
       margin-top: 20px;
       color: #6b7280;
+      font-size: 14px;
     }
+    
     .form-toggle a {
       color: #dc2626;
       text-decoration: none;
       font-weight: 600;
+      transition: all 0.3s ease;
     }
-    .signup-fields { display: none; }
-    .signup-fields.active { display: block; }
+    
+    .form-toggle a:hover {
+      text-decoration: underline;
+    }
+    
+    .signup-fields { 
+      display: none; 
+      animation: slideDown 0.5s ease-out;
+    }
+    
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .signup-fields.active { 
+      display: block; 
+    }
+    
     .avatar-preview {
       width: 80px;
       height: 80px;
@@ -103,12 +233,21 @@
       margin: 10px auto;
       border: 3px solid #e5e7eb;
       display: none;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     }
+    
+    .avatar-preview:hover {
+      transform: scale(1.05);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    }
+    
     .avatar-upload {
       display: flex;
       flex-direction: column;
       align-items: center;
     }
+    
     .avatar-upload-btn {
       background: #e5e7eb;
       color: #374151;
@@ -117,28 +256,63 @@
       font-size: 14px;
       cursor: pointer;
       margin-top: 10px;
+      transition: all 0.3s ease;
+      border: none;
+    }
+    
+    .avatar-upload-btn:hover {
+      background: #d1d5db;
+      transform: translateY(-2px);
+    }
+    
+    .loading {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 1s ease-in-out infinite;
+      margin-left: 10px;
+      vertical-align: middle;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 480px) {
+      .auth-container {
+        padding: 30px 20px;
+        margin: 0 15px;
+      }
+      
+      .logo {
+        font-size: 48px;
+      }
     }
   </style>
 </head>
 <body>
   <div class="auth-container">
     <div class="logo">LEAD</div>
-    <div class="motto">Learn. Empower. Achieve. Dream.</div>
+    <div class="motto"><span>Learn.</span> Empower. <span>Achieve.</span> Dream.</div>
 
     <form id="authForm">
       <div class="form-group">
-        <label for="email">Email</label>
-        <input type="email" id="email" required />
+        <label for="email">Email Address</label>
+        <input type="email" id="email" required placeholder="Enter your email" />
       </div>
       <div class="form-group">
         <label for="password">Password</label>
-        <input type="password" id="password" required />
+        <input type="password" id="password" required placeholder="Enter your password" />
       </div>
 
       <div class="signup-fields" id="signupFields">
         <div class="form-group">
           <label for="username">Username</label>
-          <input type="text" id="username" />
+          <input type="text" id="username" placeholder="Choose a username" />
         </div>
         
         <div class="form-group avatar-upload">
@@ -167,14 +341,16 @@
         </div>
       </div>
 
-      <button type="submit" class="btn" id="submitBtn">Sign In</button>
+      <button type="submit" class="btn" id="submitBtn">
+        <span id="btnText">Sign In</span>
+      </button>
       <button type="button" class="btn btn-secondary" id="toggleBtn">Create Account</button>
 
       <div id="message"></div>
     </form>
 
     <div class="form-toggle">
-      <p id="toggleText">New to LEAD? <a href="#" id="toggleLink">Sign up here</a></p>
+      <p id="toggleText">New to <span style="font-family: 'Dancing Script', cursive; font-weight: bold;">LEAD</span>? <a href="#" id="toggleLink">Sign up here</a></p>
     </div>
   </div>
 
@@ -195,6 +371,7 @@
     const toggleLink = document.getElementById('toggleLink');
     const avatarInput = document.getElementById('avatarInput');
     const avatarPreview = document.getElementById('avatarPreview');
+    const btnText = document.getElementById('btnText');
 
     // Handle avatar upload
     avatarInput.addEventListener('change', (event) => {
@@ -214,14 +391,14 @@
       isSignUp = !isSignUp;
       if (isSignUp) {
         signupFields.classList.add('active');
-        submitBtn.textContent = 'Create Account';
+        submitBtn.innerHTML = '<span id="btnText">Create Account</span>';
         toggleBtn.textContent = 'Back to Sign In';
         toggleText.innerHTML = 'Already have an account? <a href="#" id="toggleLink">Sign in here</a>';
       } else {
         signupFields.classList.remove('active');
-        submitBtn.textContent = 'Sign In';
+        submitBtn.innerHTML = '<span id="btnText">Sign In</span>';
         toggleBtn.textContent = 'Create Account';
-        toggleText.innerHTML = 'New to LEAD? <a href="#" id="toggleLink">Sign up here</a>';
+        toggleText.innerHTML = 'New to <span style="font-family: \'Dancing Script\', cursive; font-weight: bold;">LEAD</span>? <a href="#" id="toggleLink">Sign up here</a>';
       }
     }
 
@@ -234,6 +411,19 @@
     function showMessage(msg, type = 'error') {
       message.textContent = msg;
       message.className = type;
+    }
+
+    function showLoading(show) {
+      if (show) {
+        btnText.innerHTML = isSignUp ? 'Creating...' : 'Signing in...';
+        btnText.innerHTML += '<span class="loading"></span>';
+        submitBtn.disabled = true;
+        toggleBtn.disabled = true;
+      } else {
+        btnText.textContent = isSignUp ? 'Create Account' : 'Sign In';
+        submitBtn.disabled = false;
+        toggleBtn.disabled = false;
+      }
     }
 
     async function uploadAvatar(userId) {
@@ -265,6 +455,8 @@
       const email = document.getElementById('email').value;
       const password = document.getElementById('password').value;
 
+      showLoading(true);
+
       try {
         if (isSignUp) {
           const username = document.getElementById('username').value;
@@ -273,6 +465,7 @@
 
           if (!username || !birthday || !gradeLevel) {
             showMessage('Please fill in all fields');
+            showLoading(false);
             return;
           }
 
@@ -284,6 +477,7 @@
 
           if (signUpError) {
             showMessage(signUpError.message);
+            showLoading(false);
             return;
           }
 
@@ -303,6 +497,7 @@
 
           if (profileError) {
             showMessage('Profile creation error: ' + profileError.message);
+            showLoading(false);
             return;
           }
 
@@ -315,6 +510,7 @@
 
           if (error) {
             showMessage(error.message);
+            showLoading(false);
             return;
           }
 
@@ -327,6 +523,8 @@
         }
       } catch (error) {
         showMessage('Unexpected error: ' + error.message);
+      } finally {
+        showLoading(false);
       }
     });
 
