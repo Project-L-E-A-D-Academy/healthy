@@ -1,539 +1,517 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>LEAD - Learn. Empower. Achieve. Dream.</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Poppins:wght@300;400;500;600&family=Playfair+Display:wght@500;600&display=swap" rel="stylesheet">
-  <style>
-    * { 
-      margin: 0; 
-      padding: 0; 
-      box-sizing: border-box; 
-    }
-    
-    body {
-      font-family: 'Poppins', sans-serif;
-      background-color: #FFFFFF;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400' viewBox='0 0 800 800'%3E%3Cg fill='none' stroke='%23C60000' stroke-width='1'%3E%3Cpath d='M769 229L1037 260.9M927 880L731 737 520 660 309 538 40 599 295 764 126.5 879.5 40 599-197 493 102 382-31 229 126.5 79.5-69-63'/%3E%3Cpath d='M-31 229L237 261 390 382 603 493 308.5 537.5 101.5 381.5M370 905L295 764'/%3E%3Cpath d='M520 660L578 842 731 737 840 599 603 493 520 660 295 764 309 538 390 382 539 269 769 229 577.5 41.5 370 105 295 -36 126.5 79.5 237 261 102 382 40 599 -69 737 127 880'/%3E%3Cpath d='M520-140L578.5 42.5 731-63M603 493L539 269 237 261 370 105M902 382L539 269M390 382L102 382'/%3E%3Cpath d='M-222 42L126.5 79.5 370 105 539 269 577.5 41.5 927 80 769 229 902 382 603 493 731 737M295-36L577.5 41.5M578 842L295 764M40-201L127 80M102 382L-261 269'/%3E%3C/g%3E%3Cg fill='%239F0000'%3E%3Ccircle cx='769' cy='229' r='5'/%3E%3Ccircle cx='539' cy='269' r='5'/%3E%3Ccircle cx='603' cy='493' r='5'/%3E%3Ccircle cx='731' cy='737' r='5'/%3E%3Ccircle cx='520' cy='660' r='5'/%3E%3Ccircle cx='309' cy='538' r='5'/%3E%3Ccircle cx='295' cy='764' r='5'/%3E%3Ccircle cx='40' cy='599' r='5'/%3E%3Ccircle cx='102' cy='382' r='5'/%3E%3Ccircle cx='127' cy='80' r='5'/%3E%3Ccircle cx='370' cy='105' r='5'/%3E%3Ccircle cx='578' cy='42' r='5'/%3E%3Ccircle cx='237' cy='261' r='5'/%3E%3Ccircle cx='390' cy='382' r='5'/%3E%3C/g%3E%3C/svg%3E");
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      animation: bgMove 120s linear infinite;
-    }
-    
-    @keyframes bgMove {
-      0% { background-position: 0% 0%; }
-      50% { background-position: 100% 100%; }
-      100% { background-position: 0% 0%; }
-    }
-    
-    .auth-container {
-      background: rgba(255, 255, 255, 0.95);
-      padding: 40px;
-      border-radius: 20px;
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
-      width: 100%;
-      max-width: 400px;
-      text-align: center;
-      transform: translateY(0);
-      transition: all 0.4s ease;
-      animation: fadeIn 0.8s ease-out;
-      backdrop-filter: blur(5px);
-      border: 1px solid rgba(255, 255, 255, 0.3);
-    }
-    
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    
-    .auth-container:hover {
-      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
-      transform: translateY(-5px);
-    }
-    
-    .logo {
-      font-size: 64px;
-      font-weight: bold;
-      color: #dc2626;
-      margin-bottom: 10px;
-      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
-      font-family: 'Dancing Script', cursive;
-      background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      animation: pulse 2s infinite alternate;
-    }
-    
-    @keyframes pulse {
-      from { transform: scale(1); }
-      to { transform: scale(1.05); }
-    }
-    
-    .motto {
-      color: #6b7280;
-      margin-bottom: 30px;
-      font-size: 16px;
-      font-family: 'Playfair Display', serif;
-      font-weight: 500;
-      letter-spacing: 0.5px;
-    }
-    
-    .motto span {
-      font-family: 'Playfair Display', serif;
-      color: #dc2626;
-      font-weight: 600;
-    }
-    
-    .form-group {
-      margin-bottom: 20px;
-      text-align: left;
-      position: relative;
-    }
-    
-    label {
-      display: block;
-      margin-bottom: 8px;
-      color: #374151;
-      font-weight: 500;
-      font-size: 14px;
-      transition: all 0.3s ease;
-    }
-    
-    input, select {
-      width: 100%;
-      padding: 14px;
-      border: 2px solid #e5e7eb;
-      border-radius: 10px;
-      font-size: 16px;
-      transition: all 0.3s ease;
-      background: rgba(255, 255, 255, 0.8);
-      font-family: 'Poppins', sans-serif;
-    }
-    
-    input:focus, select:focus {
-      outline: none;
-      border-color: #dc2626;
-      box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.2);
-    }
-    
-    .btn {
-      width: 100%;
-      padding: 14px;
-      background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
-      color: white;
-      border: none;
-      border-radius: 10px;
-      font-size: 16px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      margin-bottom: 10px;
-      position: relative;
-      overflow: hidden;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
-    
-    .btn:hover { 
-      transform: translateY(-2px);
-      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
-    }
-    
-    .btn:active {
-      transform: translateY(0);
-    }
-    
-    .btn::after {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-      transition: 0.5s;
-    }
-    
-    .btn:hover::after {
-      left: 100%;
-    }
-    
-    .btn-secondary {
-      background: transparent;
-      color: #dc2626;
-      border: 2px solid #dc2626;
-    }
-    
-    .btn-secondary:hover {
-      background: #dc2626;
-      color: white;
-    }
-    
-    .error { 
-      color: #dc2626; 
-      font-size: 14px; 
-      margin-top: 10px; 
-      animation: shake 0.5s;
-    }
-    
-    .success { 
-      color: #059669; 
-      font-size: 14px; 
-      margin-top: 10px; 
-      animation: fadeIn 0.5s;
-    }
-    
-    @keyframes shake {
-      0%, 100% { transform: translateX(0); }
-      20%, 60% { transform: translateX(-5px); }
-      40%, 80% { transform: translateX(5px); }
-    }
-    
-    .form-toggle {
-      margin-top: 20px;
-      color: #6b7280;
-      font-size: 14px;
-    }
-    
-    .form-toggle a {
-      color: #dc2626;
-      text-decoration: none;
-      font-weight: 600;
-      transition: all 0.3s ease;
-    }
-    
-    .form-toggle a:hover {
-      text-decoration: underline;
-    }
-    
-    .signup-fields { 
-      display: none; 
-      animation: slideDown 0.5s ease-out;
-    }
-    
-    @keyframes slideDown {
-      from { opacity: 0; transform: translateY(-20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    
-    .signup-fields.active { 
-      display: block; 
-    }
-    
-    .avatar-preview {
-      width: 80px;
-      height: 80px;
-      border-radius: 50%;
-      object-fit: cover;
-      margin: 10px auto;
-      border: 3px solid #e5e7eb;
-      display: none;
-      transition: all 0.3s ease;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    }
-    
-    .avatar-preview:hover {
-      transform: scale(1.05);
-      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
-    }
-    
-    .avatar-upload {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-    
-    .avatar-upload-btn {
-      background: #e5e7eb;
-      color: #374151;
-      padding: 8px 16px;
-      border-radius: 20px;
-      font-size: 14px;
-      cursor: pointer;
-      margin-top: 10px;
-      transition: all 0.3s ease;
-      border: none;
-    }
-    
-    .avatar-upload-btn:hover {
-      background: #d1d5db;
-      transform: translateY(-2px);
-    }
-    
-    .loading {
-      display: inline-block;
-      width: 20px;
-      height: 20px;
-      border: 3px solid rgba(255, 255, 255, 0.3);
-      border-radius: 50%;
-      border-top-color: white;
-      animation: spin 1s ease-in-out infinite;
-      margin-left: 10px;
-      vertical-align: middle;
-    }
-    
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-    
-    /* Responsive adjustments */
-    @media (max-width: 480px) {
-      .auth-container {
-        padding: 30px 20px;
-        margin: 0 15px;
-      }
-      
-      .logo {
-        font-size: 48px;
-      }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LEAD - Main Menu</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Loading Screen */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            transition: opacity 0.5s ease-out;
+        }
+
+        .loading-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .loading-logo {
+            font-size: 80px;
+            font-weight: bold;
+            color: #dc2626;
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.3);
+            animation: pulse 2s ease-in-out infinite;
+            margin-bottom: 20px;
+        }
+
+        .loading-motto {
+            color: white;
+            font-size: 18px;
+            text-align: center;
+            opacity: 0.9;
+            animation: fadeInUp 1s ease-out 0.5s both;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 0.9;
+                transform: translateY(0);
+            }
+        }
+
+        /* Main Content */
+        .main-content {
+            opacity: 0;
+            transition: opacity 0.5s ease-in;
+        }
+
+        .main-content.visible {
+            opacity: 1;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            text-align: center;
+            color: white;
+            position: relative;
+        }
+
+        .logo {
+            font-size: 36px;
+            font-weight: bold;
+            color: #dc2626;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            margin-bottom: 10px;
+        }
+
+        .welcome-text {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .motto {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+
+        .logout-btn, .leaderboard-btn {
+            position: absolute;
+            top: 20px;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .logout-btn {
+            right: 20px;
+            background: rgba(220, 38, 38, 0.8);
+            color: white;
+        }
+
+        .logout-btn:hover {
+            background: rgba(220, 38, 38, 1);
+            transform: translateY(-2px);
+        }
+
+        .leaderboard-btn {
+            right: 140px;
+            background: rgba(234, 179, 8, 0.8);
+            color: white;
+        }
+
+        .leaderboard-btn:hover {
+            background: rgba(234, 179, 8, 1);
+            transform: translateY(-2px);
+        }
+
+        .menu-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: calc(100vh - 140px);
+            padding: 40px 20px;
+        }
+
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 40px;
+            max-width: 800px;
+            width: 100%;
+        }
+
+        .menu-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .menu-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.15);
+        }
+
+        .menu-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(90deg, #dc2626, #ef4444);
+        }
+
+        .menu-icon {
+            font-size: 60px;
+            margin-bottom: 20px;
+            display: block;
+        }
+
+        .mindfulness-icon {
+            color: #8b5cf6;
+        }
+
+        .nutrition-icon {
+            color: #10b981;
+        }
+
+        .menu-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #1f2937;
+            margin-bottom: 15px;
+        }
+
+        .menu-description {
+            color: #6b7280;
+            line-height: 1.6;
+            margin-bottom: 25px;
+        }
+
+        .menu-features {
+            list-style: none;
+            text-align: left;
+        }
+
+        .menu-features li {
+            padding: 5px 0;
+            color: #4b5563;
+            position: relative;
+            padding-left: 20px;
+        }
+
+        .menu-features li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: #10b981;
+            font-weight: bold;
+        }
+
+        .leader-preview {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .leader-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-right: 10px;
+            border: 2px solid white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .leader-info {
+            text-align: left;
+        }
+
+        .leader-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .leader-stats {
+            font-size: 12px;
+            color: #6b7280;
+        }
+
+        .fade-animation {
+            animation: fadeInOut 3s ease-in-out infinite;
+        }
+
+        @keyframes fadeInOut {
+            0%, 100% { opacity: 0.7; }
+            50% { opacity: 1; }
+        }
+
+        @media (max-width: 768px) {
+            .menu-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .menu-card {
+                padding: 30px 20px;
+            }
+            
+            .logout-btn, .leaderboard-btn {
+                position: relative;
+                margin-bottom: 10px;
+                right: auto;
+                display: block;
+                width: 100%;
+                text-align: center;
+            }
+        }
+    </style>
 </head>
 <body>
-  <div class="auth-container">
-    <div class="logo">LEAD</div>
-    <div class="motto"><span>Learn.</span> Empower. <span>Achieve.</span> Dream.</div>
-
-    <form id="authForm">
-      <div class="form-group">
-        <label for="email">Email Address</label>
-        <input type="email" id="email" required placeholder="Enter your email" />
-      </div>
-      <div class="form-group">
-        <label for="password">Password</label>
-        <input type="password" id="password" required placeholder="Enter your password" />
-      </div>
-
-      <div class="signup-fields" id="signupFields">
-        <div class="form-group">
-          <label for="username">Username</label>
-          <input type="text" id="username" placeholder="Choose a username" />
-        </div>
-        
-        <div class="form-group avatar-upload">
-          <label>Profile Picture</label>
-          <img id="avatarPreview" class="avatar-preview" />
-          <input type="file" id="avatarInput" accept="image/*" style="display: none;" />
-          <button type="button" class="avatar-upload-btn" onclick="document.getElementById('avatarInput').click()">
-            Upload Photo
-          </button>
-        </div>
-        
-        <div class="form-group">
-          <label for="birthday">Birthday</label>
-          <input type="date" id="birthday" />
-        </div>
-        <div class="form-group">
-          <label for="gradeLevel">Grade Level</label>
-          <select id="gradeLevel">
-            <option value="">Select Grade Level</option>
-            <option value="6th">6th Grade</option>
-            <option value="7th">7th Grade</option>
-            <option value="8th">8th Grade</option>
-            <option value="9th">9th Grade</option>
-            <option value="10th">10th Grade</option>
-          </select>
-        </div>
-      </div>
-
-      <button type="submit" class="btn" id="submitBtn">
-        <span id="btnText">Sign In</span>
-      </button>
-      <button type="button" class="btn btn-secondary" id="toggleBtn">Create Account</button>
-
-      <div id="message"></div>
-    </form>
-
-    <div class="form-toggle">
-      <p id="toggleText">New to <span style="font-family: 'Dancing Script', cursive; font-weight: bold;">LEAD</span>? <a href="#" id="toggleLink">Sign up here</a></p>
+    <!-- Loading Screen -->
+    <div class="loading-screen" id="loadingScreen">
+        <div class="loading-logo">LEAD</div>
+        <div class="loading-motto">Learn. Empower. Achieve. Dream.</div>
     </div>
-  </div>
 
-  <script>
-    const SUPABASE_URL = 'https://fhthwxgkxuontprzclhb.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZodGh3eGdreHVvbnRwcnpjbGhiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQwNDczNDgsImV4cCI6MjA2OTYyMzM0OH0.9mEHL1jpYXkMeWg0UNKK5LYPosj0eou4k-mw3eof-ZU';
+    <!-- Main Content -->
+    <div class="main-content" id="mainContent">
+        <div class="header">
+            <button class="leaderboard-btn" onclick="goToLeaderboard()">
+                <i data-lucide="award"></i> Leaderboards
+            </button>
+            <button class="logout-btn" onclick="logout()">
+                <i data-lucide="log-out"></i> Logout
+            </button>
+            <div class="logo">LEAD</div>
+            <div class="welcome-text" id="welcomeText">Welcome back!</div>
+            <div class="motto">Learn. Empower. Achieve. Dream.</div>
+        </div>
 
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    let isSignUp = false;
-    let avatarFile = null;
+        <div class="menu-container">
+            <div class="menu-grid">
+                <div class="menu-card" onclick="goToSection('mindfulness')">
+                    <div class="menu-icon mindfulness-icon">🧘‍♀️</div>
+                    <div class="menu-title">Mindfulness</div>
+                    <div class="menu-description">
+                        Find your inner peace and build mental wellness through guided exercises and therapy support.
+                    </div>
+                    <ul class="menu-features">
+                        <li>AI Therapy Assistant</li>
+                        <li>Breathing Exercises</li>
+                        <li>Meditation Sessions</li>
+                        <li>Sleep Stories</li>
+                        <li>Progress Tracking</li>
+                    </ul>
+                    
+                    <div class="leader-preview fade-animation" id="mindfulnessLeaderPreview">
+                        <img class="leader-avatar" id="mindfulnessLeaderAvatar" 
+                             src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face">
+                        <div class="leader-info">
+                            <div class="leader-name" id="mindfulnessLeaderName">Loading...</div>
+                            <div class="leader-stats" id="mindfulnessLeaderStats">Top Breathing Master</div>
+                        </div>
+                    </div>
+                </div>
 
-    const form = document.getElementById('authForm');
-    const submitBtn = document.getElementById('submitBtn');
-    const toggleBtn = document.getElementById('toggleBtn');
-    const signupFields = document.getElementById('signupFields');
-    const message = document.getElementById('message');
-    const toggleText = document.getElementById('toggleText');
-    const toggleLink = document.getElementById('toggleLink');
-    const avatarInput = document.getElementById('avatarInput');
-    const avatarPreview = document.getElementById('avatarPreview');
-    const btnText = document.getElementById('btnText');
+                <div class="menu-card" onclick="goToSection('nutrition')">
+                    <div class="menu-icon nutrition-icon">🥗</div>
+                    <div class="menu-title">Nutrition</div>
+                    <div class="menu-description">
+                        Build healthy eating habits with personalized meal planning and AI-powered nutrition guidance.
+                    </div>
+                    <ul class="menu-features">
+                        <li>AI Food Coach</li>
+                        <li>Meal Planning</li>
+                        <li>Calorie Tracking</li>
+                        <li>Dietary Preferences</li>
+                        <li>Grocery Lists</li>
+                    </ul>
+                    
+                    <div class="leader-preview fade-animation" id="nutritionLeaderPreview">
+                        <img class="leader-avatar" id="nutritionLeaderAvatar" 
+                             src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=40&h=40&fit=crop&crop=face">
+                        <div class="leader-info">
+                            <div class="leader-name" id="nutritionLeaderName">Loading...</div>
+                            <div class="leader-stats" id="nutritionLeaderStats">Top Nutrition Expert</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    // Handle avatar upload
-    avatarInput.addEventListener('change', (event) => {
-      const file = event.target.files[0];
-      if (file) {
-        avatarFile = file;
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          avatarPreview.src = e.target.result;
-          avatarPreview.style.display = 'block';
-        };
-        reader.readAsDataURL(file);
-      }
-    });
+    <script>
+        // Supabase configuration
+        const SUPABASE_URL = 'https://fhthwxgkxuontprzclhb.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZodGh3eGdreHVvbnRwcnpjbGhiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQwNDczNDgsImV4cCI6MjA2OTYyMzM0OH0.9mEHL1jpYXkMeWg0UNKK5LYPosj0eou4k-mw3eof-ZU';
+        
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        let currentUser = null;
 
-    function toggleForm() {
-      isSignUp = !isSignUp;
-      if (isSignUp) {
-        signupFields.classList.add('active');
-        submitBtn.innerHTML = '<span id="btnText">Create Account</span>';
-        toggleBtn.textContent = 'Back to Sign In';
-        toggleText.innerHTML = 'Already have an account? <a href="#" id="toggleLink">Sign in here</a>';
-      } else {
-        signupFields.classList.remove('active');
-        submitBtn.innerHTML = '<span id="btnText">Sign In</span>';
-        toggleBtn.textContent = 'Create Account';
-        toggleText.innerHTML = 'New to <span style="font-family: \'Dancing Script\', cursive; font-weight: bold;">LEAD</span>? <a href="#" id="toggleLink">Sign up here</a>';
-      }
-    }
-
-    toggleBtn.addEventListener('click', toggleForm);
-    toggleLink.addEventListener('click', (e) => {
-      e.preventDefault();
-      toggleForm();
-    });
-
-    function showMessage(msg, type = 'error') {
-      message.textContent = msg;
-      message.className = type;
-    }
-
-    function showLoading(show) {
-      if (show) {
-        btnText.innerHTML = isSignUp ? 'Creating...' : 'Signing in...';
-        btnText.innerHTML += '<span class="loading"></span>';
-        submitBtn.disabled = true;
-        toggleBtn.disabled = true;
-      } else {
-        btnText.textContent = isSignUp ? 'Create Account' : 'Sign In';
-        submitBtn.disabled = false;
-        toggleBtn.disabled = false;
-      }
-    }
-
-    async function uploadAvatar(userId) {
-      if (!avatarFile) return null;
-      
-      const fileExt = avatarFile.name.split('.').pop();
-      const fileName = `${userId}-${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
-      const filePath = `avatars/${fileName}`;
-      
-      const { data, error } = await supabase.storage
-        .from('avatars')
-        .upload(filePath, avatarFile);
-      
-      if (error) {
-        console.error('Error uploading avatar:', error);
-        return null;
-      }
-      
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(filePath);
-      
-      return publicUrl;
-    }
-
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
-
-      showLoading(true);
-
-      try {
-        if (isSignUp) {
-          const username = document.getElementById('username').value;
-          const birthday = document.getElementById('birthday').value;
-          const gradeLevel = document.getElementById('gradeLevel').value;
-
-          if (!username || !birthday || !gradeLevel) {
-            showMessage('Please fill in all fields');
-            showLoading(false);
-            return;
-          }
-
-          // First create auth user
-          const { data: { user }, error: signUpError } = await supabase.auth.signUp({
-            email: email,
-            password: password
-          });
-
-          if (signUpError) {
-            showMessage(signUpError.message);
-            showLoading(false);
-            return;
-          }
-
-          // Upload avatar if provided
-          const avatarUrl = await uploadAvatar(user.id);
-
-          // Create user profile
-          const { error: profileError } = await supabase
-            .from('user_profiles')
-            .insert([{
-              id: user.id,
-              username,
-              avatar_url: avatarUrl,
-              birthday,
-              grade_level: gradeLevel
-            }]);
-
-          if (profileError) {
-            showMessage('Profile creation error: ' + profileError.message);
-            showLoading(false);
-            return;
-          }
-
-          showMessage('Account created! Please check your email to verify your account.', 'success');
-        } else {
-          const { data, error } = await supabase.auth.signInWithPassword({
-            email: email,
-            password: password
-          });
-
-          if (error) {
-            showMessage(error.message);
-            showLoading(false);
-            return;
-          }
-
-          if (data.user) {
-            showMessage('Signing in...', 'success');
-            setTimeout(() => {
-              window.location.href = 'menu.html';
-            }, 1000);
-          }
+        // Check authentication and load user data
+        async function checkAuth() {
+            const { data: { user } } = await supabase.auth.getUser();
+            
+            if (!user) {
+                window.location.href = 'index.html';
+                return;
+            }
+            
+            currentUser = user;
+            
+            // Get user profile
+            const { data: profile } = await supabase
+                .from('user_profiles')
+                .select('username, avatar_url')
+                .eq('id', user.id)
+                .single();
+            
+            if (profile) {
+                document.getElementById('welcomeText').textContent = `Welcome back, ${profile.username}!`;
+            }
+            
+            // Load leaderboard previews
+            await loadLeaderPreviews();
         }
-      } catch (error) {
-        showMessage('Unexpected error: ' + error.message);
-      } finally {
-        showLoading(false);
-      }
-    });
 
-    window.addEventListener('load', async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        window.location.href = 'menu.html';
-      }
-    });
-  </script>
+        // Load leaderboard preview data
+        async function loadLeaderPreviews() {
+            try {
+                console.log('Loading leader previews...');
+                
+                // Get top mindfulness user
+                const { data: mindfulnessLeader, error: mindError } = await supabase
+                    .from('user_stats')
+                    .select(`
+                        breathing_level, 
+                        user:user_profiles(
+                            username, 
+                            avatar_url
+                        )
+                    `)
+                    .order('breathing_level', { ascending: false })
+                    .limit(1)
+                    .single();
+                
+                if (mindError) throw mindError;
+                
+                console.log('Mindfulness leader:', mindfulnessLeader);
+                
+                if (mindfulnessLeader && mindfulnessLeader.user) {
+                    document.getElementById('mindfulnessLeaderName').textContent = mindfulnessLeader.user.username;
+                    document.getElementById('mindfulnessLeaderStats').textContent = `Level ${mindfulnessLeader.breathing_level} Master`;
+                    if (mindfulnessLeader.user.avatar_url) {
+                        document.getElementById('mindfulnessLeaderAvatar').src = mindfulnessLeader.user.avatar_url;
+                    }
+                }
+                
+                // Get top nutrition user
+                const { data: nutritionLeader, error: nutError } = await supabase
+                    .from('nutrition_stats')
+                    .select(`
+                        correct_answers, 
+                        user:user_profiles(
+                            username, 
+                            avatar_url
+                        )
+                    `)
+                    .order('correct_answers', { ascending: false })
+                    .limit(1)
+                    .single();
+                
+                if (nutError) throw nutError;
+                
+                console.log('Nutrition leader:', nutritionLeader);
+                
+                if (nutritionLeader && nutritionLeader.user) {
+                    document.getElementById('nutritionLeaderName').textContent = nutritionLeader.user.username;
+                    document.getElementById('nutritionLeaderStats').textContent = `${nutritionLeader.correct_answers} correct answers`;
+                    if (nutritionLeader.user.avatar_url) {
+                        document.getElementById('nutritionLeaderAvatar').src = nutritionLeader.user.avatar_url;
+                    }
+                }
+                
+            } catch (error) {
+                console.error('Error loading leader previews:', error);
+                // Fallback to default values
+                document.getElementById('mindfulnessLeaderName').textContent = 'No data yet';
+                document.getElementById('nutritionLeaderName').textContent = 'No data yet';
+            }
+        }
+
+        // Show loading screen and then main content
+        function showContent() {
+            setTimeout(() => {
+                document.getElementById('loadingScreen').classList.add('hidden');
+                document.getElementById('mainContent').classList.add('visible');
+                lucide.createIcons();
+            }, 2000);
+        }
+
+        // Navigate to section
+        function goToSection(section) {
+            if (section === 'mindfulness') {
+                window.location.href = 'mindfulness.html';
+            } else if (section === 'nutrition') {
+                window.location.href = 'nutrition.html';
+            }
+        }
+
+        // Go to leaderboard
+        function goToLeaderboard() {
+            window.location.href = 'leaderboard.html';
+        }
+
+        // Logout function
+        async function logout() {
+            const { error } = await supabase.auth.signOut();
+            if (!error) {
+                window.location.href = 'index.html';
+            }
+        }
+
+        // Initialize page
+        window.addEventListener('load', async () => {
+            await checkAuth();
+            showContent();
+        });
+    </script>
 </body>
 </html>
