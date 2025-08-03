@@ -140,6 +140,30 @@
     .delay-3 { animation-delay: 0.3s; }
     .delay-4 { animation-delay: 0.4s; }
 
+    /* Anti-cheat styles */
+    .cheat-warning {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: #ff4444;
+      color: white;
+      padding: 1rem;
+      text-align: center;
+      z-index: 2000;
+      display: none;
+    }
+
+    /* Loading spinner */
+    .loading-spinner {
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
     /* Mobile optimizations */
     @media (max-width: 768px) {
       .header {
@@ -173,6 +197,14 @@
   </style>
 </head>
 <body class="min-h-screen">
+  <!-- Cheat warning -->
+  <div id="cheatWarning" class="cheat-warning">
+    <div class="flex items-center justify-center space-x-2">
+      <i data-lucide="alert-triangle" class="w-5 h-5"></i>
+      <span>Warning: Suspicious activity detected!</span>
+    </div>
+  </div>
+
   <!-- Header with navigation -->
   <header class="header p-4 mb-8">
     <div class="header-container flex justify-between items-center">
@@ -329,7 +361,8 @@
       nutritionLeaderboard: document.getElementById('nutritionLeaderboard'),
       termsModal: document.getElementById('termsModal'),
       quizModal: document.getElementById('quizModal'),
-      quizContent: document.getElementById('quizContent')
+      quizContent: document.getElementById('quizContent'),
+      cheatWarning: document.getElementById('cheatWarning')
     };
 
     // Initialize the app
@@ -339,6 +372,7 @@
         await fetchTopUsers();
         renderMindfulnessLeaderboard();
         setupEventListeners();
+        setupAntiCheat();
       } catch (error) {
         console.error('Error initializing app:', error);
         // Continue with test data
@@ -346,6 +380,62 @@
         state.topNutritionUser = state.testUsers[1];
         renderMindfulnessLeaderboard();
         setupEventListeners();
+        setupAntiCheat();
+      }
+    }
+
+    // Anti-cheat measures
+    function setupAntiCheat() {
+      // Track window focus
+      window.addEventListener('focus', () => {
+        state.isWindowFocused = true;
+      });
+      
+      window.addEventListener('blur', () => {
+        state.isWindowFocused = false;
+        if (state.quizStartTime) {
+          state.suspiciousActivity++;
+          checkSuspiciousActivity();
+        }
+      });
+      
+      // Track tab switching
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden && state.quizStartTime) {
+          state.tabSwitchCount++;
+          state.suspiciousActivity++;
+          checkSuspiciousActivity();
+        }
+      });
+      
+      // Track quick answers
+      let lastAnswerTime = null;
+      
+      window.selectAnswer = (index) => {
+        const now = Date.now();
+        if (lastAnswerTime && (now - lastAnswerTime) < 1000) {
+          state.suspiciousActivity++;
+          checkSuspiciousActivity();
+        }
+        lastAnswerTime = now;
+        state.selectedAnswer = index;
+        renderQuizQuestion();
+      };
+    }
+    
+    function checkSuspiciousActivity() {
+      if (state.suspiciousActivity > 2) {
+        elements.cheatWarning.style.display = 'block';
+        setTimeout(() => {
+          elements.cheatWarning.style.display = 'none';
+        }, 5000);
+        
+        // Reset quiz if cheating detected
+        if (state.quizStartTime) {
+          closeQuizModal();
+          state.suspiciousActivity = 0;
+          state.tabSwitchCount = 0;
+        }
       }
     }
 
@@ -513,12 +603,19 @@
     // Show quiz modal
     function showQuizModal() {
       elements.quizModal.classList.remove('hidden');
+      state.quizStartTime = Date.now();
       startQuiz();
     }
 
     // Close quiz modal
     function closeQuizModal() {
       elements.quizModal.classList.add('hidden');
+      state.currentQuestion = 0;
+      state.score = 0;
+      state.selectedAnswer = null;
+      state.quizStartTime = null;
+      state.suspiciousActivity = 0;
+      state.tabSwitchCount = 0;
     }
 
     // Start quiz function
@@ -545,6 +642,7 @@
       state.quizQuestions = questions;
       state.currentQuestion = 0;
       state.score = 0;
+      state.selectedAnswer = null;
       
       renderQuizQuestion();
     }
@@ -582,13 +680,6 @@
       `;
       
       elements.quizContent.innerHTML = html;
-      state.selectedAnswer = null;
-    }
-
-    // Select answer
-    function selectAnswer(index) {
-      state.selectedAnswer = index;
-      renderQuizQuestion(); // Re-render to show selected state
     }
 
     // Submit answer
@@ -601,6 +692,7 @@
       }
       
       state.currentQuestion++;
+      state.selectedAnswer = null;
       renderQuizQuestion();
     }
 
@@ -624,6 +716,54 @@
       
       elements.quizContent.innerHTML = html;
       lucide.createIcons();
+      
+      // Update user's score in the database
+      if (state.currentUser) {
+        updateUserScore(state.score);
+      }
+    }
+
+    // Update user's score in the database
+    async function updateUserScore(score) {
+      try {
+        // Get current stats
+        const { data: currentStats, error: getError } = await supabase
+          .from('nutrition_stats')
+          .select('correct_answers, wrong_answers, total_answers')
+          .eq('user_id', state.currentUser.id)
+          .single();
+        
+        if (getError && getError.code !== 'PGRST116') { // Ignore "No rows found" error
+          throw getError;
+        }
+        
+        // Calculate new values
+        const correctAnswers = (currentStats?.correct_answers || 0) + score;
+        const wrongAnswers = (currentStats?.wrong_answers || 0) + (state.quizQuestions.length - score);
+        const totalAnswers = (currentStats?.total_answers || 0) + state.quizQuestions.length;
+        const accuracy = Math.round((correctAnswers / totalAnswers) * 100);
+        
+        // Upsert the data
+        const { error: upsertError } = await supabase
+          .from('nutrition_stats')
+          .upsert({
+            user_id: state.currentUser.id,
+            correct_answers: correctAnswers,
+            wrong_answers: wrongAnswers,
+            total_answers: totalAnswers,
+            accuracy: accuracy,
+            updated_at: new Date().toISOString()
+          });
+        
+        if (upsertError) throw upsertError;
+        
+        // Refresh leaderboard
+        await fetchTopUsers();
+        renderNutritionLeaderboard();
+        
+      } catch (error) {
+        console.error('Error updating user score:', error);
+      }
     }
 
     // Render mindfulness leaderboard
