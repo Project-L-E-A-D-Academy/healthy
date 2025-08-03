@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LEAD - Nutrition</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;600;700&family=Poppins:wght@300;400;500;600;700&family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -13,51 +14,177 @@
         }
 
         body {
-            font-family: 'Arial', sans-serif;
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            font-family: 'Poppins', sans-serif;
             min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
         }
 
+        /* Animated Background */
+        .animated-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
+            overflow: hidden;
+        }
+
+        .floating-shapes {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+        }
+
+        .shape {
+            position: absolute;
+            opacity: 0.1;
+            animation: float 20s infinite linear;
+        }
+
+        .shape:nth-child(1) {
+            left: 10%;
+            width: 80px;
+            height: 80px;
+            background: #10b981;
+            border-radius: 50%;
+            animation-delay: 0s;
+        }
+
+        .shape:nth-child(2) {
+            left: 20%;
+            width: 60px;
+            height: 60px;
+            background: #8b5cf6;
+            border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
+            animation-delay: 2s;
+        }
+
+        .shape:nth-child(3) {
+            left: 35%;
+            width: 100px;
+            height: 100px;
+            background: #f59e0b;
+            border-radius: 20%;
+            animation-delay: 4s;
+        }
+
+        .shape:nth-child(4) {
+            left: 50%;
+            width: 70px;
+            height: 70px;
+            background: #ef4444;
+            border-radius: 50%;
+            animation-delay: 6s;
+        }
+
+        .shape:nth-child(5) {
+            left: 65%;
+            width: 90px;
+            height: 90px;
+            background: #06b6d4;
+            border-radius: 40% 60% 60% 40% / 60% 30% 70% 40%;
+            animation-delay: 8s;
+        }
+
+        .shape:nth-child(6) {
+            left: 80%;
+            width: 50px;
+            height: 50px;
+            background: #84cc16;
+            border-radius: 50%;
+            animation-delay: 10s;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(100vh) rotate(0deg);
+            }
+            100% {
+                transform: translateY(-100px) rotate(360deg);
+            }
+        }
+
+        /* Enhanced Loading Screen */
         .loading-screen {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            z-index: 1000;
-            transition: opacity 0.5s ease-out;
+            z-index: 2000;
+            transition: all 0.8s ease-out;
         }
 
         .loading-screen.hidden {
             opacity: 0;
-            pointer-events: none;
+            visibility: hidden;
+            transform: scale(0.8);
         }
 
         .loading-logo {
-            font-size: 80px;
-            font-weight: bold;
-            color: #dc2626;
-            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.3);
-            animation: pulse 2s ease-in-out infinite;
-            margin-bottom: 20px;
+            font-family: 'Dancing Script', cursive;
+            font-size: clamp(60px, 12vw, 120px);
+            font-weight: 700;
+            color: #ffffff;
+            text-shadow: 0 0 30px rgba(255, 255, 255, 0.5);
+            animation: logoGlow 3s ease-in-out infinite;
+            margin-bottom: 30px;
+            position: relative;
+        }
+
+        .loading-logo::before {
+            content: 'LEAD';
+            position: absolute;
+            top: 0;
+            left: 0;
+            background: linear-gradient(45deg, #10b981, #06b6d4, #8b5cf6, #f59e0b);
+            background-size: 400% 400%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradientShift 4s ease-in-out infinite;
         }
 
         .loading-motto {
-            color: white;
-            font-size: 18px;
+            color: rgba(255, 255, 255, 0.9);
+            font-size: clamp(16px, 3vw, 24px);
             text-align: center;
-            opacity: 0.9;
-            animation: fadeInUp 1s ease-out 0.5s both;
+            font-weight: 300;
+            letter-spacing: 2px;
+            animation: fadeInUp 2s ease-out 1s both;
         }
 
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #10b981;
+            animation: spin 1s ease-in-out infinite;
+            margin-top: 40px;
+        }
+
+        @keyframes logoGlow {
+            0%, 100% { 
+                transform: scale(1);
+                filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.3));
+            }
+            50% { 
+                transform: scale(1.05);
+                filter: drop-shadow(0 0 40px rgba(255, 255, 255, 0.6));
+            }
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
         }
 
         @keyframes fadeInUp {
@@ -71,44 +198,62 @@
             }
         }
 
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Enhanced Header */
         .header {
-            background: rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(10px);
-            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 15px 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            color: white;
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
 
         .logo {
-            font-size: 28px;
-            font-weight: bold;
-            color: #dc2626;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            font-family: 'Dancing Script', cursive;
+            font-size: clamp(24px, 5vw, 36px);
+            font-weight: 700;
+            color: #ffffff;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 10px;
         }
 
         .nav-buttons button {
             background: rgba(255, 255, 255, 0.2);
             color: white;
             border: none;
-            padding: 10px 20px;
-            margin-left: 10px;
-            border-radius: 25px;
+            padding: 8px 16px;
+            border-radius: 20px;
             cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s;
+            font-weight: 500;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
         }
 
         .nav-buttons button:hover {
             background: rgba(255, 255, 255, 0.3);
             transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
         }
 
+        /* Main Content */
         .main-content {
             opacity: 0;
-            transition: opacity 0.5s ease-in;
-            padding: 40px 20px;
+            transition: opacity 0.8s ease-in;
+            padding: 20px;
+            min-height: calc(100vh - 80px);
         }
 
         .main-content.visible {
@@ -124,298 +269,390 @@
             text-align: center;
             color: white;
             margin-bottom: 40px;
+            padding: 20px;
         }
 
         .welcome-title {
-            font-size: 36px;
-            margin-bottom: 10px;
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(32px, 6vw, 48px);
+            font-weight: 700;
+            margin-bottom: 15px;
+            text-shadow: 0 2px 20px rgba(0, 0, 0, 0.3);
         }
 
         .welcome-subtitle {
-            font-size: 18px;
+            font-size: clamp(16px, 3vw, 20px);
             opacity: 0.9;
+            font-weight: 300;
+            letter-spacing: 1px;
         }
 
+        /* Enhanced Cards */
         .nutrition-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 30px;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
             margin-bottom: 40px;
         }
 
         .nutrition-card {
             background: rgba(255, 255, 255, 0.95);
-            border-radius: 20px;
+            backdrop-filter: blur(20px);
+            border-radius: 25px;
             padding: 30px;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .nutrition-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #10b981, #06b6d4, #8b5cf6);
+            background-size: 200% 100%;
+            animation: gradientMove 3s ease-in-out infinite;
+        }
+
+        @keyframes gradientMove {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .nutrition-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.15);
         }
 
         .card-title {
-            font-size: 24px;
-            font-weight: bold;
+            font-size: clamp(20px, 4vw, 28px);
+            font-weight: 600;
             color: #1f2937;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
             display: flex;
             align-items: center;
-            gap: 10px;
-        }
-
-        .dietary-preferences {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-
-        .diet-option {
-            padding: 10px;
-            background: #f3f4f6;
-            border: 2px solid #e5e7eb;
-            border-radius: 10px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-size: 14px;
-            font-weight: 600;
-        }
-
-        .diet-option.active {
-            background: #10b981;
-            color: white;
-            border-color: #059669;
-        }
-
-        .diet-option:hover {
-            border-color: #10b981;
-        }
-
-        .meal-form {
-            display: grid;
             gap: 15px;
-            margin-bottom: 20px;
+            font-family: 'Playfair Display', serif;
         }
 
-        .form-row {
-            display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 10px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-            color: #374151;
-            font-weight: 600;
-        }
-
-        .form-group input, .form-group select, .form-group textarea {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #e5e7eb;
-            border-radius: 8px;
-            font-size: 16px;
-            transition: border-color 0.3s;
-        }
-
-        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
-            outline: none;
-            border-color: #10b981;
-        }
-
-        .btn {
-            background: #10b981;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background 0.3s;
-        }
-
-        .btn:hover {
-            background: #059669;
-        }
-
-        .btn-secondary {
-            background: #6b7280;
-        }
-
-        .btn-secondary:hover {
-            background: #4b5563;
-        }
-
-        .meal-logs {
-            max-height: 400px;
-            overflow-y: auto;
-        }
-
-        .meal-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px;
-            background: #f9fafb;
-            border-radius: 10px;
-            margin-bottom: 10px;
-            border: 1px solid #e5e7eb;
-        }
-
-        .meal-info h4 {
-            color: #1f2937;
-            margin-bottom: 5px;
-        }
-
-        .meal-info p {
-            color: #6b7280;
-            font-size: 14px;
-        }
-
-        .meal-actions button {
-            background: #dc2626;
-            color: white;
-            border: none;
-            padding: 6px 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 12px;
-            font-weight: 600;
-        }
-
+        /* AI Chat Enhancement */
         .ai-coach-section {
             grid-column: 1 / -1;
         }
 
         .chat-container {
-            max-height: 400px;
+            max-height: 500px;
             overflow-y: auto;
-            border: 1px solid #e5e7eb;
-            border-radius: 10px;
-            padding: 20px;
-            margin-bottom: 20px;
-            background: #f9fafb;
+            border: none;
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 25px;
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.05);
         }
 
         .chat-message {
-            margin-bottom: 15px;
-            padding: 10px 15px;
-            border-radius: 15px;
-            max-width: 80%;
+            margin-bottom: 20px;
+            padding: 15px 20px;
+            border-radius: 20px;
+            max-width: 85%;
+            animation: messageSlide 0.3s ease-out;
+        }
+
+        @keyframes messageSlide {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .chat-message.user {
-            background: #10b981;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
             color: white;
             margin-left: auto;
             text-align: right;
+            box-shadow: 0 5px 15px rgba(16, 185, 129, 0.3);
         }
 
         .chat-message.ai {
             background: white;
             color: #1f2937;
             border: 1px solid #e5e7eb;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
         }
 
         .chat-input-container {
             display: flex;
-            gap: 10px;
+            gap: 15px;
+            align-items: end;
         }
 
         .chat-input {
             flex: 1;
-            padding: 12px;
+            padding: 15px 20px;
             border: 2px solid #e5e7eb;
             border-radius: 25px;
             font-size: 16px;
             outline: none;
+            transition: all 0.3s ease;
+            background: white;
+            resize: none;
+            min-height: 50px;
+            max-height: 120px;
         }
 
         .chat-input:focus {
             border-color: #10b981;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
         }
 
         .chat-send {
-            background: #10b981;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
             color: white;
             border: none;
-            padding: 12px 20px;
+            padding: 15px 25px;
             border-radius: 25px;
             cursor: pointer;
             font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(16, 185, 129, 0.3);
+            min-width: 80px;
         }
 
-        .stats-overview {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
+        .chat-send:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+        }
+
+        /* Enhanced Form Elements */
+        .form-group {
             margin-bottom: 20px;
         }
 
-        .stat-box {
-            background: #f0fdf4;
-            border: 2px solid #bbf7d0;
-            border-radius: 10px;
-            padding: 15px;
-            text-align: center;
-        }
-
-        .stat-number {
-            font-size: 24px;
-            font-weight: bold;
-            color: #059669;
-            margin-bottom: 5px;
-        }
-
-        .stat-label {
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
             color: #374151;
-            font-size: 12px;
+            font-weight: 600;
+            font-size: 14px;
         }
 
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e5e7eb;
+            border-radius: 15px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #10b981;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 15px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+        }
+
+        /* Recipe Card */
+        .recipe-item {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        .recipe-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .recipe-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 10px;
+        }
+
+        .recipe-meta {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+            font-size: 14px;
+            color: #6b7280;
+        }
+
+        .ingredients-list {
+            background: #f9fafb;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+
+        .ingredients-list h5 {
+            margin-bottom: 10px;
+            color: #374151;
+            font-weight: 600;
+        }
+
+        .ingredients-list ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .ingredients-list li {
+            padding: 5px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .ingredients-list li:last-child {
+            border-bottom: none;
+        }
+
+        /* API Status */
         .api-status {
             position: fixed;
             bottom: 20px;
             right: 20px;
-            padding: 10px 15px;
-            border-radius: 20px;
+            padding: 12px 20px;
+            border-radius: 25px;
             font-size: 14px;
             font-weight: 600;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
             z-index: 100;
+            backdrop-filter: blur(10px);
         }
 
         .api-status.connected {
-            background: #bbf7d0;
+            background: rgba(187, 247, 208, 0.9);
             color: #065f46;
+            border: 1px solid rgba(16, 185, 129, 0.3);
         }
 
         .api-status.disconnected {
-            background: #fecaca;
+            background: rgba(254, 202, 202, 0.9);
             color: #991b1b;
+            border: 1px solid rgba(239, 68, 68, 0.3);
         }
 
+        /* Enhanced Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        /* Mobile Responsiveness */
         @media (max-width: 768px) {
+            .header {
+                padding: 10px 15px;
+            }
+            
+            .main-content {
+                padding: 15px;
+            }
+
             .nutrition-grid {
                 grid-template-columns: 1fr;
                 gap: 20px;
             }
-            
-            .form-row {
+
+            .nutrition-card {
+                padding: 20px;
+            }
+
+            .chat-input-container {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .chat-send {
+                align-self: stretch;
+            }
+
+            .nav-buttons {
+                gap: 5px;
+            }
+
+            .nav-buttons button {
+                padding: 6px 12px;
+                font-size: 12px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .nutrition-grid {
                 grid-template-columns: 1fr;
             }
             
-            .dietary-preferences {
-                grid-template-columns: repeat(2, 1fr);
+            .nutrition-card {
+                margin: 0 -5px;
+                border-radius: 20px;
             }
         }
     </style>
 </head>
 <body>
+    <!-- Animated Background -->
+    <div class="animated-bg">
+        <div class="floating-shapes">
+            <div class="shape"></div>
+            <div class="shape"></div>
+            <div class="shape"></div>
+            <div class="shape"></div>
+            <div class="shape"></div>
+            <div class="shape"></div>
+        </div>
+    </div>
+
+    <!-- Loading Screen -->
     <div class="loading-screen" id="loadingScreen">
         <div class="loading-logo">LEAD</div>
         <div class="loading-motto">Learn. Empower. Achieve. Dream.</div>
+        <div class="loading-spinner"></div>
     </div>
 
+    <!-- Header -->
     <div class="header">
         <div class="logo">LEAD - Nutrition</div>
         <div class="nav-buttons">
@@ -424,119 +661,73 @@
         </div>
     </div>
 
+    <!-- Main Content -->
     <div class="main-content" id="mainContent">
         <div class="dashboard">
             <div class="welcome-section">
-                <h1 class="welcome-title">Nutrition Center</h1>
-                <p class="welcome-subtitle">Fuel your body, nourish your goals</p>
-            </div>
-
-            <div class="stats-overview">
-                <div class="stat-box">
-                    <div class="stat-number" id="totalMeals">0</div>
-                    <div class="stat-label">Meals Logged</div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-number" id="avgCalories">0</div>
-                    <div class="stat-label">Avg Daily Calories</div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-number" id="streakDays">0</div>
-                    <div class="stat-label">Logging Streak</div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-number" id="currentDiet">All</div>
-                    <div class="stat-label">Current Diet</div>
-                </div>
+                <h1 class="welcome-title">AI Nutrition Assistant</h1>
+                <p class="welcome-subtitle">Let AI analyze, track, and optimize your nutrition journey</p>
             </div>
 
             <div class="nutrition-grid">
-                <div class="nutrition-card">
-                    <div class="card-title">
-                        🥗 Dietary Preferences
-                    </div>
-                    <div class="dietary-preferences">
-                        <div class="diet-option active" data-diet="All">All Foods</div>
-                        <div class="diet-option" data-diet="Vegetarian">Vegetarian</div>
-                        <div class="diet-option" data-diet="Vegan">Vegan</div>
-                        <div class="diet-option" data-diet="Gluten-Free">Gluten-Free</div>
-                        <div class="diet-option" data-diet="Keto">Keto</div>
-                        <div class="diet-option" data-diet="Paleo">Paleo</div>
-                    </div>
-                    <p style="color: #6b7280; font-size: 14px; margin-top: 10px;">
-                        Select your dietary preference to get personalized meal suggestions.
-                    </p>
-                </div>
-
-                <div class="nutrition-card">
-                    <div class="card-title">
-                        📝 Log Your Meals
-                    </div>
-                    <form class="meal-form" id="mealForm">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="mealName">Meal Name</label>
-                                <input type="text" id="mealName" placeholder="e.g., Grilled Chicken Salad" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="calories">Calories</label>
-                                <input type="number" id="calories" placeholder="350">
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label for="mealType">Meal Type</label>
-                            <select id="mealType" required>
-                                <option value="">Select meal type</option>
-                                <option value="breakfast">Breakfast</option>
-                                <option value="lunch">Lunch</option>
-                                <option value="dinner">Dinner</option>
-                                <option value="snack">Snack</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="notes">Notes (optional)</label>
-                            <textarea id="notes" rows="2" placeholder="How did it taste? How did you feel?"></textarea>
-                        </div>
-                        <button type="submit" class="btn">Log Meal</button>
-                    </form>
-                </div>
-
-                <div class="nutrition-card">
-                    <div class="card-title">
-                        🍽️ Recent Meals
-                    </div>
-                    <div class="meal-logs" id="mealLogs">
-                        <p style="color: #6b7280; text-align: center; padding: 20px;">
-                            No meals logged yet. Start by adding your first meal above!
-                        </p>
-                    </div>
-                </div>
-
+                <!-- AI Chat Section -->
                 <div class="nutrition-card ai-coach-section">
                     <div class="card-title">
-                        🤖 AI Food Coach
+                        🤖 Your AI Nutrition Coach
                     </div>
-                    <p style="color: #6b7280; margin-bottom: 20px;">
-                        Get personalized nutrition advice from our AI nutritionist.
+                    <p style="color: #6b7280; margin-bottom: 25px; font-size: 15px;">
+                        Tell me what you ate, ask for recipes, or get personalized nutrition advice. I can log meals, analyze nutrition, and save recipes for you!
                     </p>
                     
                     <div class="chat-container" id="coachChatContainer">
                         <div class="chat-message ai">
-                            <p>Hi! I'm your AI Food Coach! 🥗 I'm here to help you make healthy food choices, plan balanced meals, and answer any nutrition questions you have. What would you like to know about nutrition today?</p>
+                            <p>Hello! I'm your AI Nutrition Coach! 🥗✨ Here's what I can help you with:</p>
+                            <br>
+                            <p><strong>📝 Meal Logging:</strong> Just tell me "I ate [food]" and I'll analyze and log it automatically</p>
+                            <p><strong>🍳 Recipe Creation:</strong> Ask "Create a recipe for [dish]" and I'll save it with ingredients and instructions</p>
+                            <p><strong>📊 Nutrition Analysis:</strong> I'll analyze your meals for calories, nutrients, and health benefits</p>
+                            <p><strong>💡 Smart Suggestions:</strong> Get personalized meal recommendations based on your eating patterns</p>
+                            <br>
+                            <p>What would you like to do today?</p>
                         </div>
                     </div>
                     
                     <div class="chat-input-container">
-                        <input type="text" class="chat-input" id="coachChatInput" placeholder="Ask about nutrition, meal ideas, or food facts..." onkeypress="handleCoachChatKeyPress(event)">
+                        <textarea class="chat-input" id="coachChatInput" placeholder="Tell me what you ate, ask for a recipe, or get nutrition advice..." onkeypress="handleChatKeyPress(event)" rows="2"></textarea>
                         <button class="chat-send" onclick="sendCoachMessage()">Send</button>
+                    </div>
+                </div>
+
+                <!-- Recent Meals -->
+                <div class="nutrition-card">
+                    <div class="card-title">
+                        🍽️ Recent Meals
+                    </div>
+                    <div class="meal-logs" id="mealLogs" style="max-height: 400px; overflow-y: auto;">
+                        <p style="color: #6b7280; text-align: center; padding: 20px;">
+                            No meals logged yet. Chat with your AI coach to start logging meals!
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Saved Recipes -->
+                <div class="nutrition-card">
+                    <div class="card-title">
+                        📚 Saved Recipes
+                    </div>
+                    <div class="recipe-logs" id="recipeLogs" style="max-height: 400px; overflow-y: auto;">
+                        <p style="color: #6b7280; text-align: center; padding: 20px;">
+                            No recipes saved yet. Ask your AI coach to create recipes for you!
+                        </p>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- API Status -->
     <div class="api-status disconnected" id="apiStatus">
-        AI Service: Disconnected
+        AI Service: Connecting...
     </div>
 
     <script>
@@ -552,7 +743,6 @@
         const MODEL_NAME = 'deepseek/deepseek-chat-v3-0324:free';
         
         let currentUser = null;
-        let currentDietPreference = 'All';
         let apiConnected = false;
 
         async function checkAuth() {
@@ -564,9 +754,8 @@
             }
             
             currentUser = user;
-            await loadUserProfile();
             await loadMeals();
-            await loadStats();
+            await loadRecipes();
             await verifyApiConnection();
         }
 
@@ -596,7 +785,7 @@
                     statusElement.classList.add('connected');
                 } else {
                     apiConnected = false;
-                    statusElement.textContent = 'AI Service: Disconnected (Check API Key)';
+                    statusElement.textContent = 'AI Service: Disconnected';
                     statusElement.classList.remove('connected');
                     statusElement.classList.add('disconnected');
                 }
@@ -605,26 +794,6 @@
                 statusElement.textContent = 'AI Service: Connection Failed';
                 statusElement.classList.remove('connected');
                 statusElement.classList.add('disconnected');
-            }
-        }
-
-        async function loadUserProfile() {
-            const { data: profile } = await supabase
-                .from('user_profiles')
-                .select('dietary_preference')
-                .eq('id', currentUser.id)
-                .single();
-            
-            if (profile && profile.dietary_preference) {
-                currentDietPreference = profile.dietary_preference;
-                document.getElementById('currentDiet').textContent = currentDietPreference;
-                
-                document.querySelectorAll('.diet-option').forEach(option => {
-                    option.classList.remove('active');
-                    if (option.dataset.diet === currentDietPreference) {
-                        option.classList.add('active');
-                    }
-                });
             }
         }
 
@@ -641,51 +810,98 @@
             if (!meals || meals.length === 0) {
                 mealLogs.innerHTML = `
                     <p style="color: #6b7280; text-align: center; padding: 20px;">
-                        No meals logged yet. Start by adding your first meal above!
+                        No meals logged yet. Chat with your AI coach to start logging meals!
                     </p>
                 `;
                 return;
             }
             
             mealLogs.innerHTML = meals.map(meal => `
-                <div class="meal-item">
-                    <div class="meal-info">
-                        <h4>${meal.meal_name}</h4>
-                        <p>${meal.meal_type} • ${meal.calories || 'No'} calories • ${new Date(meal.logged_at).toLocaleDateString()}</p>
-                        ${meal.notes ? `<p style="font-style: italic; margin-top: 5px;">"${meal.notes}"</p>` : ''}
-                    </div>
-                    <div class="meal-actions">
-                        <button onclick="deleteMeal('${meal.id}')">Delete</button>
+                <div class="meal-item" style="background: white; border-radius: 15px; padding: 20px; margin-bottom: 15px; border: 1px solid #e5e7eb; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);">
+                    <div style="display: flex; justify-content: space-between; align-items: start;">
+                        <div>
+                            <h4 style="color: #1f2937; margin-bottom: 8px; font-size: 18px;">${meal.meal_name}</h4>
+                            <p style="color: #6b7280; font-size: 14px; margin-bottom: 5px;">
+                                ${meal.meal_type || 'Meal'} • ${meal.calories || 'Unknown'} calories
+                            </p>
+                            <p style="color: #9ca3af; font-size: 13px;">
+                                ${new Date(meal.logged_at).toLocaleDateString()} at ${new Date(meal.logged_at).toLocaleTimeString()}
+                            </p>
+                            ${meal.notes ? `<p style="font-style: italic; margin-top: 10px; color: #374151; font-size: 14px;">${meal.notes}</p>` : ''}
+                            ${meal.ai_analysis ? `<div style="background: #f0fdf4; padding: 10px; border-radius: 8px; margin-top: 10px; border-left: 3px solid #10b981;"><p style="font-size: 13px; color: #059669;"><strong>AI Analysis:</strong> ${meal.ai_analysis}</p></div>` : ''}
+                        </div>
+                        <button onclick="deleteMeal('${meal.id}')" style="background: #ef4444; color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600; transition: all 0.3s ease;">Delete</button>
                     </div>
                 </div>
             `).join('');
         }
 
-        async function loadStats() {
-            const { data: meals } = await supabase
-                .from('nutrition_logs')
+        async function loadRecipes() {
+            const { data: recipes } = await supabase
+                .from('saved_recipes')
                 .select('*')
-                .eq('user_id', currentUser.id);
+                .eq('user_id', currentUser.id)
+                .order('created_at', { ascending: false });
             
-            if (meals && meals.length > 0) {
-                document.getElementById('totalMeals').textContent = meals.length;
-                
-                const totalCalories = meals.reduce((sum, meal) => sum + (meal.calories || 0), 0);
-                const avgCalories = Math.round(totalCalories / meals.length);
-                document.getElementById('avgCalories').textContent = avgCalories;
-                
-                const uniqueDays = [...new Set(meals.map(meal => 
-                    new Date(meal.logged_at).toDateString()
-                ))].length;
-                document.getElementById('streakDays').textContent = uniqueDays;
+            const recipeLogs = document.getElementById('recipeLogs');
+            
+            if (!recipes || recipes.length === 0) {
+                recipeLogs.innerHTML = `
+                    <p style="color: #6b7280; text-align: center; padding: 20px;">
+                        No recipes saved yet. Ask your AI coach to create recipes for you!
+                    </p>
+                `;
+                return;
             }
+            
+            recipeLogs.innerHTML = recipes.map(recipe => {
+                let ingredientsList = '';
+                try {
+                    const ingredients = JSON.parse(recipe.ingredients);
+                    ingredientsList = ingredients.map(ing => `<li>${ing}</li>`).join('');
+                } catch (e) {
+                    ingredientsList = `<li>${recipe.ingredients}</li>`;
+                }
+
+                return `
+                    <div class="recipe-item">
+                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 15px;">
+                            <div>
+                                <h4 class="recipe-title">${recipe.recipe_name}</h4>
+                                <div class="recipe-meta">
+                                    <span>🕒 ${recipe.prep_time || 'Unknown'} min</span>
+                                    <span>🍽️ ${recipe.servings || 'Unknown'} servings</span>
+                                    <span>🔥 ${recipe.total_calories || 'Unknown'} cal</span>
+                                </div>
+                            </div>
+                            <button onclick="deleteRecipe('${recipe.id}')" style="background: #ef4444; color: white; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 11px;">Delete</button>
+                        </div>
+                        
+                        <div class="ingredients-list">
+                            <h5>Ingredients:</h5>
+                            <ul>${ingredientsList}</ul>
+                        </div>
+                        
+                        ${recipe.instructions ? `
+                        <div style="background: #f8fafc; padding: 15px; border-radius: 10px;">
+                            <h5 style="margin-bottom: 10px; color: #374151;">Instructions:</h5>
+                            <p style="color: #4b5563; font-size: 14px; line-height: 1.6;">${recipe.instructions}</p>
+                        </div>
+                        ` : ''}
+                        
+                        <p style="color: #9ca3af; font-size: 12px; margin-top: 15px;">
+                            Created: ${new Date(recipe.created_at).toLocaleDateString()}
+                        </p>
+                    </div>
+                `;
+            }).join('');
         }
 
         function showContent() {
             setTimeout(() => {
                 document.getElementById('loadingScreen').classList.add('hidden');
                 document.getElementById('mainContent').classList.add('visible');
-            }, 2000);
+            }, 3000);
         }
 
         function goHome() {
@@ -699,55 +915,6 @@
             }
         }
 
-        document.addEventListener('click', async (e) => {
-            if (e.target.classList.contains('diet-option')) {
-                document.querySelectorAll('.diet-option').forEach(option => {
-                    option.classList.remove('active');
-                });
-                e.target.classList.add('active');
-                
-                currentDietPreference = e.target.dataset.diet;
-                document.getElementById('currentDiet').textContent = currentDietPreference;
-                
-                await supabase
-                    .from('user_profiles')
-                    .update({ dietary_preference: currentDietPreference })
-                    .eq('id', currentUser.id);
-            }
-        });
-
-        document.getElementById('mealForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const mealName = document.getElementById('mealName').value;
-            const calories = parseInt(document.getElementById('calories').value) || null;
-            const mealType = document.getElementById('mealType').value;
-            const notes = document.getElementById('notes').value;
-            
-            try {
-                const { error } = await supabase
-                    .from('nutrition_logs')
-                    .insert([{
-                        user_id: currentUser.id,
-                        meal_name: mealName,
-                        calories: calories,
-                        meal_type: mealType,
-                        notes: notes
-                    }]);
-                
-                if (error) throw error;
-                
-                document.getElementById('mealForm').reset();
-                await loadMeals();
-                await loadStats();
-                
-                alert('Meal logged successfully!');
-            } catch (error) {
-                console.error('Error logging meal:', error);
-                alert('Error logging meal. Please try again.');
-            }
-        });
-
         async function deleteMeal(mealId) {
             if (!confirm('Are you sure you want to delete this meal?')) return;
             
@@ -759,18 +926,34 @@
                     .eq('user_id', currentUser.id);
                 
                 if (error) throw error;
-                
                 await loadMeals();
-                await loadStats();
             } catch (error) {
                 console.error('Error deleting meal:', error);
                 alert('Error deleting meal. Please try again.');
             }
         }
 
+        async function deleteRecipe(recipeId) {
+            if (!confirm('Are you sure you want to delete this recipe?')) return;
+            
+            try {
+                const { error } = await supabase
+                    .from('saved_recipes')
+                    .delete()
+                    .eq('id', recipeId)
+                    .eq('user_id', currentUser.id);
+                
+                if (error) throw error;
+                await loadRecipes();
+            } catch (error) {
+                console.error('Error deleting recipe:', error);
+                alert('Error deleting recipe. Please try again.');
+            }
+        }
+
         async function sendCoachMessage() {
             if (!apiConnected) {
-                alert('AI service is currently unavailable. Please check your API key or try again later.');
+                alert('AI service is currently unavailable. Please check your connection.');
                 return;
             }
             
@@ -781,6 +964,7 @@
             
             const chatContainer = document.getElementById('coachChatContainer');
             
+            // Add user message
             const userMessage = document.createElement('div');
             userMessage.className = 'chat-message user';
             userMessage.innerHTML = `<p>${message}</p>`;
@@ -789,23 +973,25 @@
             input.value = '';
             chatContainer.scrollTop = chatContainer.scrollHeight;
             
+            // Add loading message
             const loadingMessage = document.createElement('div');
             loadingMessage.className = 'chat-message ai';
-            loadingMessage.innerHTML = `<p>Thinking...</p>`;
+            loadingMessage.innerHTML = `<p>🤔 Analyzing your request...</p>`;
             loadingMessage.id = 'loadingMessage';
             chatContainer.appendChild(loadingMessage);
             chatContainer.scrollTop = chatContainer.scrollHeight;
             
             try {
+                // Get recent meals for context
                 const { data: recentMeals } = await supabase
                     .from('nutrition_logs')
-                    .select('meal_name, calories, meal_type, logged_at')
+                    .select('meal_name, calories, meal_type, logged_at, ai_analysis')
                     .eq('user_id', currentUser.id)
                     .order('logged_at', { ascending: false })
                     .limit(5);
                 
                 const mealContext = recentMeals && recentMeals.length > 0 
-                    ? `Recent meals: ${recentMeals.map(m => `${m.meal_name} (${m.meal_type}, ${m.calories || 'unknown'} calories)`).join(', ')}`
+                    ? `Recent meals: ${recentMeals.map(m => `${m.meal_name} (${m.meal_type || 'meal'}, ${m.calories || 'unknown'} calories)`).join(', ')}`
                     : 'No recent meals logged';
                 
                 const response = await fetch(OPENROUTER_API_URL, {
@@ -820,61 +1006,132 @@
                         model: MODEL_NAME,
                         messages: [{
                             role: 'system',
-                            content: `You are a friendly AI Food Coach for teenagers. Provide helpful, science-based nutrition advice that's age-appropriate and encouraging. Focus on balanced eating, healthy habits, and positive relationships with food. Current user diet preference: ${currentDietPreference}. ${mealContext}. Keep responses conversational and supportive.`
+                            content: `You are an AI Nutrition Coach for teenagers. You can:
+
+1. LOG MEALS: When user says they ate something, respond with JSON format:
+{
+  "action": "log_meal",
+  "meal_name": "food name",
+  "meal_type": "breakfast/lunch/dinner/snack",
+  "calories": estimated_calories_number,
+  "analysis": "brief nutritional analysis and health advice"
+}
+
+2. CREATE RECIPES: When asked for recipes, respond with JSON format:
+{
+  "action": "save_recipe",
+  "recipe_name": "recipe name",
+  "ingredients": ["ingredient 1", "ingredient 2", ...],
+  "instructions": "step by step instructions",
+  "prep_time": minutes_number,
+  "servings": number,
+  "total_calories": estimated_total_calories
+}
+
+3. GIVE ADVICE: For other nutrition questions, respond normally with helpful advice.
+
+Context: ${mealContext}
+
+Always be encouraging, scientifically accurate, and age-appropriate. Focus on balanced nutrition and healthy relationships with food.`
                         }, {
                             role: 'user',
                             content: message
                         }],
-                        max_tokens: 1000,
+                        max_tokens: 1500,
                         temperature: 0.7
                     })
                 });
                 
                 const data = await response.json();
                 
+                // Remove loading message
                 const loading = document.getElementById('loadingMessage');
                 if (loading) loading.remove();
                 
                 if (!response.ok) {
-                    console.error('API Error Details:', data);
-                    
-                    let errorMsg = 'I apologize, but I\'m having trouble connecting to my AI service right now. ';
-                    
-                    if (response.status === 401) {
-                        errorMsg += 'This appears to be an authentication issue. Please check that the API key is valid.';
-                        apiConnected = false;
-                        document.getElementById('apiStatus').textContent = 'AI Service: Invalid API Key';
-                    } else if (response.status === 429) {
-                        errorMsg += 'Too many requests. Please wait a moment and try again.';
-                    } else {
-                        errorMsg += `Error code: ${response.status}. Please try again later.`;
-                    }
-                    
-                    const errorMessage = document.createElement('div');
-                    errorMessage.className = 'chat-message ai';
-                    errorMessage.innerHTML = `<p>${errorMsg}</p>`;
-                    chatContainer.appendChild(errorMessage);
-                    chatContainer.scrollTop = chatContainer.scrollHeight;
-                    return;
-                }
-                
-                if (!data.choices || !data.choices[0] || !data.choices[0].message) {
-                    console.error('Unexpected API response structure:', data);
-                    
-                    const errorMessage = document.createElement('div');
-                    errorMessage.className = 'chat-message ai';
-                    errorMessage.innerHTML = `<p>I received an unexpected response format. Please try asking your question again.</p>`;
-                    chatContainer.appendChild(errorMessage);
-                    chatContainer.scrollTop = chatContainer.scrollHeight;
-                    return;
+                    throw new Error(`API Error: ${response.status}`);
                 }
                 
                 const aiResponse = data.choices[0].message.content;
                 
-                const aiMessage = document.createElement('div');
-                aiMessage.className = 'chat-message ai';
-                aiMessage.innerHTML = `<p>${aiResponse}</p>`;
-                chatContainer.appendChild(aiMessage);
+                // Try to parse as JSON for actions
+                try {
+                    const jsonResponse = JSON.parse(aiResponse);
+                    
+                    if (jsonResponse.action === 'log_meal') {
+                        // Log the meal to database
+                        const { error } = await supabase
+                            .from('nutrition_logs')
+                            .insert([{
+                                user_id: currentUser.id,
+                                meal_name: jsonResponse.meal_name,
+                                calories: jsonResponse.calories,
+                                meal_type: jsonResponse.meal_type,
+                                ai_analysis: jsonResponse.analysis
+                            }]);
+                        
+                        if (!error) {
+                            await loadMeals();
+                            
+                            const aiMessage = document.createElement('div');
+                            aiMessage.className = 'chat-message ai';
+                            aiMessage.innerHTML = `
+                                <p>✅ <strong>Meal logged successfully!</strong></p>
+                                <div style="background: #f0fdf4; padding: 15px; border-radius: 10px; margin: 10px 0; border-left: 3px solid #10b981;">
+                                    <p><strong>📝 ${jsonResponse.meal_name}</strong></p>
+                                    <p>🔥 ${jsonResponse.calories} calories | 🍽️ ${jsonResponse.meal_type}</p>
+                                    <p style="margin-top: 10px;"><strong>Analysis:</strong> ${jsonResponse.analysis}</p>
+                                </div>
+                            `;
+                            chatContainer.appendChild(aiMessage);
+                        } else {
+                            throw new Error('Failed to log meal');
+                        }
+                    } else if (jsonResponse.action === 'save_recipe') {
+                        // Save recipe to database
+                        const { error } = await supabase
+                            .from('saved_recipes')
+                            .insert([{
+                                user_id: currentUser.id,
+                                recipe_name: jsonResponse.recipe_name,
+                                ingredients: JSON.stringify(jsonResponse.ingredients),
+                                instructions: jsonResponse.instructions,
+                                prep_time: jsonResponse.prep_time,
+                                servings: jsonResponse.servings,
+                                total_calories: jsonResponse.total_calories
+                            }]);
+                        
+                        if (!error) {
+                            await loadRecipes();
+                            
+                            const ingredientsList = jsonResponse.ingredients.map(ing => `<li>${ing}</li>`).join('');
+                            
+                            const aiMessage = document.createElement('div');
+                            aiMessage.className = 'chat-message ai';
+                            aiMessage.innerHTML = `
+                                <p>📚 <strong>Recipe saved successfully!</strong></p>
+                                <div style="background: #fef3c7; padding: 15px; border-radius: 10px; margin: 10px 0; border-left: 3px solid #f59e0b;">
+                                    <h4 style="margin-bottom: 10px;">${jsonResponse.recipe_name}</h4>
+                                    <p>🕒 ${jsonResponse.prep_time} min | 🍽️ ${jsonResponse.servings} servings | 🔥 ${jsonResponse.total_calories} cal</p>
+                                    <div style="margin: 10px 0;">
+                                        <strong>Ingredients:</strong>
+                                        <ul style="margin: 5px 0; padding-left: 20px;">${ingredientsList}</ul>
+                                    </div>
+                                    <p><strong>Instructions:</strong> ${jsonResponse.instructions}</p>
+                                </div>
+                            `;
+                            chatContainer.appendChild(aiMessage);
+                        } else {
+                            throw new Error('Failed to save recipe');
+                        }
+                    }
+                } catch (parseError) {
+                    // Regular text response
+                    const aiMessage = document.createElement('div');
+                    aiMessage.className = 'chat-message ai';
+                    aiMessage.innerHTML = `<p>${aiResponse}</p>`;
+                    chatContainer.appendChild(aiMessage);
+                }
                 
                 chatContainer.scrollTop = chatContainer.scrollHeight;
                 
@@ -884,27 +1141,27 @@
                 const loading = document.getElementById('loadingMessage');
                 if (loading) loading.remove();
                 
-                let errorMsg = 'I\'m sorry, I\'m having trouble responding right now. ';
-                
-                if (error.name === 'TypeError' && error.message.includes('fetch')) {
-                    errorMsg += 'This might be a network connectivity issue. Please check your internet connection and try again.';
-                } else {
-                    errorMsg += 'Please try again in a moment.';
-                }
-                
                 const errorMessage = document.createElement('div');
                 errorMessage.className = 'chat-message ai';
-                errorMessage.innerHTML = `<p>${errorMsg}</p>`;
+                errorMessage.innerHTML = `<p>I'm sorry, I'm having trouble responding right now. Please try again in a moment.</p>`;
                 chatContainer.appendChild(errorMessage);
+                
                 chatContainer.scrollTop = chatContainer.scrollHeight;
             }
         }
 
-        function handleCoachChatKeyPress(event) {
-            if (event.key === 'Enter') {
+        function handleChatKeyPress(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
                 sendCoachMessage();
             }
         }
+
+        // Auto-resize textarea
+        document.getElementById('coachChatInput').addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+        });
 
         window.addEventListener('load', async () => {
             await checkAuth();
