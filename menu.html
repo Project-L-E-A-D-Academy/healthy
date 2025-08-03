@@ -2,10 +2,13 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>LEAD - Main Menu</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Poppins:wght@300;400;500;600;700&family=Playfair+Display:wght@500;600&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -14,10 +17,17 @@
         }
 
         body {
-            font-family: 'Arial', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Poppins', sans-serif;
+            background-color: #FFFFFF;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='420' height='420' viewBox='0 0 200 200'%3E%3Cg fill='none' stroke='%23A50000' stroke-width='1.2' stroke-opacity='0.21'%3E%3Crect x='-40' y='40' width='75' height='75'/%3E%3Crect x='-35' y='45' width='65' height='65'/%3E%3Crect x='-30' y='50' width='55' height='55'/%3E%3Crect x='-25' y='55' width='45' height='45'/%3E%3Crect x='-20' y='60' width='35' height='35'/%3E%3Crect x='-15' y='65' width='25' height='25'/%3E%3Crect x='-10' y='70' width='15' height='15'/%3E%3Crect x='-5' y='75' width='5' height='5'/%3E%3Crect width='35' height='35'/%3E%3Crect x='5' y='5' width='25' height='25'/%3E%3Crect x='10' y='10' width='15' height='15'/%3E%3Crect x='15' y='15' width='5' height='5'/%3E%3Crect x='40' width='75' height='75'/%3E%3Crect x='45' y='5' width='65' height='65'/%3E%3Crect x='50' y='10' width='55' height='55'/%3E%3Crect x='55' y='15' width='45' height='45'/%3E%3Crect x='60' y='20' width='35' height='35'/%3E%3Crect x='65' y='25' width='25' height='25'/%3E%3Crect x='70' y='30' width='15' height='15'/%3E%3Crect x='75' y='35' width='5' height='5'/%3E%3Crect x='40' y='80' width='35' height='35'/%3E%3Crect x='45' y='85' width='25' height='25'/%3E%3Crect x='50' y='90' width='15' height='15'/%3E%3Crect x='55' y='95' width='5' height='5'/%3E%3Crect x='120' y='-40' width='75' height='75'/%3E%3Crect x='125' y='-35' width='65' height='65'/%3E%3Crect x='130' y='-30' width='55' height='55'/%3E%3Crect x='135' y='-25' width='45' height='45'/%3E%3Crect x='140' y='-20' width='35' height='35'/%3E%3Crect x='145' y='-15' width='25' height='25'/%3E%3Crect x='150' y='-10' width='15' height='15'/%3E%3Crect x='155' y='-5' width='5' height='5'/%3E%3Crect x='120' y='40' width='35' height='35'/%3E%3Crect x='125' y='45' width='25' height='25'/%3E%3Crect x='130' y='50' width='15' height='15'/%3E%3Crect x='135' y='55' width='5' height='5'/%3E%3Crect y='120' width='75' height='75'/%3E%3Crect x='5' y='125' width='65' height='65'/%3E%3Crect x='10' y='130' width='55' height='55'/%3E%3Crect x='15' y='135' width='45' height='45'/%3E%3Crect x='20' y='140' width='35' height='35'/%3E%3Crect x='25' y='145' width='25' height='25'/%3E%3Crect x='30' y='150' width='15' height='15'/%3E%3Crect x='35' y='155' width='5' height='5'/%3E%3Crect x='200' y='120' width='75' height='75'/%3E%3Crect x='40' y='200' width='75' height='75'/%3E%3Crect x='80' y='80' width='75' height='75'/%3E%3Crect x='85' y='85' width='65' height='65'/%3E%3Crect x='90' y='90' width='55' height='55'/%3E%3Crect x='95' y='95' width='45' height='45'/%3E%3Crect x='100' y='100' width='35' height='35'/%3E%3Crect x='105' y='105' width='25' height='25'/%3E%3Crect x='110' y='110' width='15' height='15'/%3E%3Crect x='115' y='115' width='5' height='5'/%3E%3Crect x='80' y='160' width='35' height='35'/%3E%3Crect x='85' y='165' width='25' height='25'/%3E%3Crect x='90' y='170' width='15' height='15'/%3E%3Crect x='95' y='175' width='5' height='5'/%3E%3Crect x='120' y='160' width='75' height='75'/%3E%3Crect x='125' y='165' width='65' height='65'/%3E%3Crect x='130' y='170' width='55' height='55'/%3E%3Crect x='135' y='175' width='45' height='45'/%3E%3Crect x='140' y='180' width='35' height='35'/%3E%3Crect x='145' y='185' width='25' height='25'/%3E%3Crect x='150' y='190' width='15' height='15'/%3E%3Crect x='155' y='195' width='5' height='5'/%3E%3Crect x='160' y='40' width='75' height='75'/%3E%3Crect x='165' y='45' width='65' height='65'/%3E%3Crect x='170' y='50' width='55' height='55'/%3E%3Crect x='175' y='55' width='45' height='45'/%3E%3Crect x='180' y='60' width='35' height='35'/%3E%3Crect x='185' y='65' width='25' height='25'/%3E%3Crect x='190' y='70' width='15' height='15'/%3E%3Crect x='195' y='75' width='5' height='5'/%3E%3Crect x='160' y='120' width='35' height='35'/%3E%3Crect x='165' y='125' width='25' height='25'/%3E%3Crect x='170' y='130' width='15' height='15'/%3E%3Crect x='175' y='135' width='5' height='5'/%3E%3Crect x='200' y='200' width='35' height='35'/%3E%3Crect x='200' width='35' height='35'/%3E%3Crect y='200' width='35' height='35'/%3E%3C/g%3E%3C/svg%3E");
             min-height: 100vh;
             overflow-x: hidden;
+            animation: bgMove 80s linear infinite;
+        }
+
+        @keyframes bgMove {
+            0% { background-position: 0% 0%; }
+            100% { background-position: 100% 100%; }
         }
 
         /* Loading Screen */
@@ -27,13 +37,14 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: rgba(255, 255, 255, 0.98);
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             z-index: 1000;
-            transition: opacity 0.5s ease-out;
+            transition: opacity 0.8s ease-out;
+            backdrop-filter: blur(5px);
         }
 
         .loading-screen.hidden {
@@ -42,20 +53,36 @@
         }
 
         .loading-logo {
-            font-size: 80px;
+            font-size: 5rem;
             font-weight: bold;
             color: #dc2626;
-            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.3);
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.1);
             animation: pulse 2s ease-in-out infinite;
-            margin-bottom: 20px;
+            margin-bottom: 1.5rem;
+            font-family: 'Dancing Script', cursive;
+            background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
         .loading-motto {
-            color: white;
-            font-size: 18px;
+            color: #4b5563;
+            font-size: 1.2rem;
             text-align: center;
             opacity: 0.9;
             animation: fadeInUp 1s ease-out 0.5s both;
+            font-family: 'Playfair Display', serif;
+            letter-spacing: 0.5px;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(220, 38, 38, 0.2);
+            border-radius: 50%;
+            border-top-color: #dc2626;
+            margin-top: 2rem;
+            animation: spin 1s linear infinite;
         }
 
         @keyframes pulse {
@@ -74,10 +101,14 @@
             }
         }
 
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
         /* Main Content */
         .main-content {
             opacity: 0;
-            transition: opacity 0.5s ease-in;
+            transition: opacity 0.8s ease-in;
         }
 
         .main-content.visible {
@@ -85,99 +116,119 @@
         }
 
         .header {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.9);
             backdrop-filter: blur(10px);
-            padding: 20px;
+            padding: 1.5rem;
             text-align: center;
-            color: white;
+            color: #1f2937;
             position: relative;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
         }
 
         .logo {
-            font-size: 36px;
+            font-size: 2.5rem;
             font-weight: bold;
             color: #dc2626;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 0.5rem;
+            font-family: 'Dancing Script', cursive;
+            background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: pulse 3s infinite;
         }
 
         .welcome-text {
-            font-size: 18px;
-            margin-bottom: 10px;
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+            color: #4b5563;
+            font-weight: 500;
         }
 
         .motto {
-            font-size: 14px;
+            font-size: 0.9rem;
             opacity: 0.8;
+            color: #6b7280;
+            font-family: 'Playfair Display', serif;
+        }
+
+        .motto span {
+            color: #dc2626;
+            font-weight: 600;
         }
 
         .logout-btn, .leaderboard-btn {
             position: absolute;
-            top: 20px;
+            top: 1.5rem;
             border: none;
-            padding: 10px 20px;
-            border-radius: 25px;
+            padding: 0.6rem 1.2rem;
+            border-radius: 2rem;
             cursor: pointer;
             font-weight: 600;
             transition: all 0.3s;
             display: flex;
             align-items: center;
-            gap: 5px;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
 
         .logout-btn {
-            right: 20px;
-            background: rgba(220, 38, 38, 0.8);
+            right: 1.5rem;
+            background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
             color: white;
         }
 
         .logout-btn:hover {
-            background: rgba(220, 38, 38, 1);
             transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         }
 
         .leaderboard-btn {
-            right: 140px;
-            background: rgba(234, 179, 8, 0.8);
+            right: 9rem;
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
             color: white;
         }
 
         .leaderboard-btn:hover {
-            background: rgba(234, 179, 8, 1);
             transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         }
 
         .menu-container {
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: calc(100vh - 140px);
-            padding: 40px 20px;
+            min-height: calc(100vh - 120px);
+            padding: 2rem 1rem;
         }
 
         .menu-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 40px;
-            max-width: 800px;
+            gap: 2rem;
+            max-width: 900px;
             width: 100%;
         }
 
         .menu-card {
             background: rgba(255, 255, 255, 0.95);
-            border-radius: 20px;
-            padding: 40px;
+            border-radius: 1.5rem;
+            padding: 2.5rem;
             text-align: center;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             cursor: pointer;
             position: relative;
             overflow: hidden;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            backdrop-filter: blur(5px);
         }
 
         .menu-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.15);
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.12);
         }
 
         .menu-card::before {
@@ -186,14 +237,27 @@
             top: 0;
             left: 0;
             right: 0;
-            height: 5px;
+            height: 6px;
             background: linear-gradient(90deg, #dc2626, #ef4444);
+            animation: rainbow 8s linear infinite;
+            background-size: 400% 400%;
+        }
+
+        @keyframes rainbow {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
         }
 
         .menu-icon {
-            font-size: 60px;
-            margin-bottom: 20px;
+            font-size: 4rem;
+            margin-bottom: 1.5rem;
             display: block;
+            transition: transform 0.3s ease;
+        }
+
+        .menu-card:hover .menu-icon {
+            transform: scale(1.1);
         }
 
         .mindfulness-icon {
@@ -205,28 +269,32 @@
         }
 
         .menu-title {
-            font-size: 24px;
-            font-weight: bold;
+            font-size: 1.5rem;
+            font-weight: 700;
             color: #1f2937;
-            margin-bottom: 15px;
+            margin-bottom: 1rem;
+            font-family: 'Playfair Display', serif;
         }
 
         .menu-description {
             color: #6b7280;
             line-height: 1.6;
-            margin-bottom: 25px;
+            margin-bottom: 1.5rem;
+            font-size: 0.95rem;
         }
 
         .menu-features {
             list-style: none;
             text-align: left;
+            margin-bottom: 1.5rem;
         }
 
         .menu-features li {
-            padding: 5px 0;
+            padding: 0.5rem 0;
             color: #4b5563;
             position: relative;
-            padding-left: 20px;
+            padding-left: 1.5rem;
+            font-size: 0.9rem;
         }
 
         .menu-features li::before {
@@ -238,23 +306,35 @@
         }
 
         .leader-preview {
-            margin-top: 20px;
-            padding: 15px;
-            background: rgba(0, 0, 0, 0.05);
-            border-radius: 10px;
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.03);
+            border-radius: 0.8rem;
             display: flex;
             align-items: center;
             justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .menu-card:hover .leader-preview {
+            background: rgba(0, 0, 0, 0.05);
+            transform: translateY(-5px);
         }
 
         .leader-avatar {
-            width: 40px;
-            height: 40px;
+            width: 2.5rem;
+            height: 2.5rem;
             border-radius: 50%;
             object-fit: cover;
-            margin-right: 10px;
+            margin-right: 0.8rem;
             border: 2px solid white;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .menu-card:hover .leader-avatar {
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         }
 
         .leader-info {
@@ -262,13 +342,13 @@
         }
 
         .leader-name {
-            font-size: 14px;
+            font-size: 0.9rem;
             font-weight: 600;
             color: #1f2937;
         }
 
         .leader-stats {
-            font-size: 12px;
+            font-size: 0.8rem;
             color: #6b7280;
         }
 
@@ -277,27 +357,73 @@
         }
 
         @keyframes fadeInOut {
-            0%, 100% { opacity: 0.7; }
+            0%, 100% { opacity: 0.8; }
             50% { opacity: 1; }
         }
 
+        /* Mobile Responsiveness */
         @media (max-width: 768px) {
+            body {
+                animation: none;
+                background-position: center;
+            }
+            
+            .loading-logo {
+                font-size: 3.5rem;
+            }
+            
+            .loading-motto {
+                font-size: 1rem;
+            }
+            
             .menu-grid {
                 grid-template-columns: 1fr;
-                gap: 20px;
+                gap: 1.5rem;
+                padding: 0 1rem;
             }
             
             .menu-card {
-                padding: 30px 20px;
+                padding: 2rem 1.5rem;
             }
             
             .logout-btn, .leaderboard-btn {
                 position: relative;
-                margin-bottom: 10px;
+                top: auto;
                 right: auto;
-                display: block;
-                width: 100%;
-                text-align: center;
+                margin: 0.5rem auto;
+                width: 80%;
+                justify-content: center;
+            }
+            
+            .header {
+                padding-bottom: 6rem;
+            }
+            
+            .logo {
+                font-size: 2rem;
+                margin-top: 1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .menu-card {
+                padding: 1.5rem 1rem;
+            }
+            
+            .menu-icon {
+                font-size: 3rem;
+            }
+            
+            .menu-title {
+                font-size: 1.3rem;
+            }
+            
+            .menu-description {
+                font-size: 0.9rem;
+            }
+            
+            .welcome-text {
+                font-size: 1.1rem;
             }
         }
     </style>
@@ -307,6 +433,7 @@
     <div class="loading-screen" id="loadingScreen">
         <div class="loading-logo">LEAD</div>
         <div class="loading-motto">Learn. Empower. Achieve. Dream.</div>
+        <div class="loading-spinner"></div>
     </div>
 
     <!-- Main Content -->
@@ -320,7 +447,7 @@
             </button>
             <div class="logo">LEAD</div>
             <div class="welcome-text" id="welcomeText">Welcome back!</div>
-            <div class="motto">Learn. Empower. Achieve. Dream.</div>
+            <div class="motto"><span>Learn.</span> Empower. <span>Achieve.</span> Dream.</div>
         </div>
 
         <div class="menu-container">
@@ -414,8 +541,6 @@
         // Load leaderboard preview data
         async function loadLeaderPreviews() {
             try {
-                console.log('Loading leader previews...');
-                
                 // Get top mindfulness user
                 const { data: mindfulnessLeader, error: mindError } = await supabase
                     .from('user_stats')
@@ -431,8 +556,6 @@
                     .single();
                 
                 if (mindError) throw mindError;
-                
-                console.log('Mindfulness leader:', mindfulnessLeader);
                 
                 if (mindfulnessLeader && mindfulnessLeader.user) {
                     document.getElementById('mindfulnessLeaderName').textContent = mindfulnessLeader.user.username;
@@ -457,8 +580,6 @@
                     .single();
                 
                 if (nutError) throw nutError;
-                
-                console.log('Nutrition leader:', nutritionLeader);
                 
                 if (nutritionLeader && nutritionLeader.user) {
                     document.getElementById('nutritionLeaderName').textContent = nutritionLeader.user.username;
