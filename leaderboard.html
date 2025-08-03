@@ -19,46 +19,43 @@
       background-size: cover;
       min-height: 100vh;
       overflow-x: hidden;
+      position: relative;
     }
 
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
+    /* Background overlay for mobile */
+    @media (max-width: 768px) {
+      body::before {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255,255,255,0.95);
+        z-index: -1;
+      }
+      body {
+        background-attachment: scroll;
+        background-position: center;
+        background-size: auto 100%;
+      }
     }
-
-    @keyframes pulse {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.05); }
-    }
-
-    @keyframes slideIn {
-      from { transform: translateX(-20px); opacity: 0; }
-      to { transform: translateX(0); opacity: 1; }
-    }
-
-    .fade-in {
-      animation: fadeIn 0.5s ease-out forwards;
-    }
-
-    .pulse-hover:hover {
-      animation: pulse 0.5s ease-in-out;
-    }
-
-    .slide-in {
-      animation: slideIn 0.3s ease-out forwards;
-    }
-
-    .delay-1 { animation-delay: 0.1s; }
-    .delay-2 { animation-delay: 0.2s; }
-    .delay-3 { animation-delay: 0.3s; }
-    .delay-4 { animation-delay: 0.4s; }
 
     /* Header styles */
     .header {
-      background: rgba(255, 255, 255, 0.9);
+      background: rgba(255, 255, 255, 0.95);
       backdrop-filter: blur(10px);
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-      border-radius: 0 0 20px 20px;
+      position: relative;
+      z-index: 10;
+      width: 100vw;
+      margin-left: calc(-50vw + 50%);
+    }
+
+    .header-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 1rem;
     }
 
     /* Card styles */
@@ -66,11 +63,34 @@
       background: rgba(255, 255, 255, 0.95);
       backdrop-filter: blur(10px);
       transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      border-radius: 16px;
+      overflow: hidden;
     }
 
-    .leaderboard-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+    /* Modal styles */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      backdrop-filter: blur(5px);
+    }
+
+    .modal-content {
+      background: white;
+      border-radius: 16px;
+      padding: 2rem;
+      max-width: 90%;
+      width: 500px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
     }
 
     /* Rank badge styles */
@@ -105,22 +125,23 @@
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
 
-    /* Loading spinner */
-    .loading-spinner {
-      animation: spin 1s linear infinite;
+    /* Animations */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
+    .fade-in {
+      animation: fadeIn 0.5s ease-out forwards;
     }
+
+    .delay-1 { animation-delay: 0.1s; }
+    .delay-2 { animation-delay: 0.2s; }
+    .delay-3 { animation-delay: 0.3s; }
+    .delay-4 { animation-delay: 0.4s; }
 
     /* Mobile optimizations */
     @media (max-width: 768px) {
-      body {
-        background-attachment: scroll;
-      }
-      
       .header {
         padding: 0.8rem;
       }
@@ -132,6 +153,11 @@
       .user-avatar {
         width: 40px;
         height: 40px;
+      }
+      
+      .modal-content {
+        width: 95%;
+        padding: 1.5rem;
       }
     }
 
@@ -146,10 +172,10 @@
     }
   </style>
 </head>
-<body class="min-h-screen p-4">
+<body class="min-h-screen">
   <!-- Header with navigation -->
   <header class="header p-4 mb-8">
-    <div class="max-w-6xl mx-auto flex justify-between items-center">
+    <div class="header-container flex justify-between items-center">
       <h1 class="text-2xl font-bold text-gray-900 font-playfair">Community Leaderboards</h1>
       <div class="flex space-x-2">
         <button onclick="window.location.href='menu.html'" class="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors">
@@ -162,23 +188,23 @@
     </div>
   </header>
 
-  <div class="max-w-6xl mx-auto">
+  <div class="max-w-6xl mx-auto px-4">
     <!-- Main Navigation -->
     <div class="flex justify-center mb-8 fade-in">
       <div class="flex space-x-1 bg-slate-100 p-1 rounded-lg shadow-inner">
         <button
           id="mindfulnessBtn"
-          class="py-3 px-6 rounded-md font-medium transition-colors flex items-center tab-active pulse-hover"
+          class="py-3 px-6 rounded-md font-medium transition-colors flex items-center tab-active text-blue-600"
         >
           <i data-lucide="brain" class="w-5 h-5 mr-2 tab-icon"></i>
-          <span class="tab-text">Mindfulness</span>
+          <span class="tab-text">🧘‍♀️ Monk-ness LeaderBoard</span>
         </button>
         <button
           id="nutritionBtn"
-          class="py-3 px-6 rounded-md font-medium transition-colors flex items-center text-slate-600 hover:text-slate-900 pulse-hover"
+          class="py-3 px-6 rounded-md font-medium transition-colors flex items-center text-slate-600 hover:text-slate-900"
         >
           <i data-lucide="carrot" class="w-5 h-5 mr-2 tab-icon"></i>
-          <span class="tab-text">Nutrition</span>
+          <span class="tab-text">🥗 Nutri Board</span>
         </button>
       </div>
     </div>
@@ -186,6 +212,58 @@
     <!-- Leaderboard Content -->
     <div id="mindfulnessLeaderboard" class="fade-in"></div>
     <div id="nutritionLeaderboard" class="hidden fade-in"></div>
+  </div>
+
+  <!-- Modal for terms -->
+  <div id="termsModal" class="modal-overlay hidden">
+    <div class="modal-content">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-xl font-bold text-gray-900 font-playfair">Term Definitions</h3>
+        <button onclick="closeModal()" class="text-gray-500 hover:text-gray-700">
+          <i data-lucide="x" class="w-6 h-6"></i>
+        </button>
+      </div>
+      <div class="space-y-4">
+        <div>
+          <h4 class="font-semibold text-gray-900">Mindfulness</h4>
+          <p class="text-gray-600">The practice of being fully present and engaged in the current moment.</p>
+        </div>
+        <div>
+          <h4 class="font-semibold text-gray-900">Nutrition</h4>
+          <p class="text-gray-600">The process of providing or obtaining the food necessary for health and growth.</p>
+        </div>
+        <div>
+          <h4 class="font-semibold text-gray-900">Breathing Level</h4>
+          <p class="text-gray-600">Your progress in mastering breathing techniques and exercises.</p>
+        </div>
+        <div>
+          <h4 class="font-semibold text-gray-900">Meditation</h4>
+          <p class="text-gray-600">A practice where an individual uses a technique to train attention and awareness.</p>
+        </div>
+        <div>
+          <h4 class="font-semibold text-gray-900">Focus Sessions</h4>
+          <p class="text-gray-600">Periods of concentrated work or study with minimized distractions.</p>
+        </div>
+      </div>
+      <button onclick="closeModal()" class="mt-6 w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-medium transition-colors">
+        Close
+      </button>
+    </div>
+  </div>
+
+  <!-- Quiz Modal -->
+  <div id="quizModal" class="modal-overlay hidden">
+    <div class="modal-content">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-xl font-bold text-gray-900 font-playfair">Nutrition Quiz</h3>
+        <button onclick="closeQuizModal()" class="text-gray-500 hover:text-gray-700">
+          <i data-lucide="x" class="w-6 h-6"></i>
+        </button>
+      </div>
+      <div id="quizContent" class="space-y-4">
+        <!-- Quiz content will be inserted here -->
+      </div>
+    </div>
   </div>
 
   <script>
@@ -248,7 +326,10 @@
       mindfulnessBtn: document.getElementById('mindfulnessBtn'),
       nutritionBtn: document.getElementById('nutritionBtn'),
       mindfulnessLeaderboard: document.getElementById('mindfulnessLeaderboard'),
-      nutritionLeaderboard: document.getElementById('nutritionLeaderboard')
+      nutritionLeaderboard: document.getElementById('nutritionLeaderboard'),
+      termsModal: document.getElementById('termsModal'),
+      quizModal: document.getElementById('quizModal'),
+      quizContent: document.getElementById('quizContent')
     };
 
     // Initialize the app
@@ -419,6 +500,132 @@
       }
     }
 
+    // Show modal with term definitions
+    function showTermsModal() {
+      elements.termsModal.classList.remove('hidden');
+    }
+
+    // Close modal
+    function closeModal() {
+      elements.termsModal.classList.add('hidden');
+    }
+
+    // Show quiz modal
+    function showQuizModal() {
+      elements.quizModal.classList.remove('hidden');
+      startQuiz();
+    }
+
+    // Close quiz modal
+    function closeQuizModal() {
+      elements.quizModal.classList.add('hidden');
+    }
+
+    // Start quiz function
+    function startQuiz() {
+      // Generate quiz questions
+      const questions = [
+        {
+          question: "Which of these is a good source of protein?",
+          options: ["Apple", "Chicken breast", "White bread", "Soda"],
+          correctAnswer: 1
+        },
+        {
+          question: "How many servings of vegetables should you eat daily?",
+          options: ["1-2", "3-5", "6-8", "None"],
+          correctAnswer: 1
+        },
+        {
+          question: "Which vitamin is important for bone health?",
+          options: ["Vitamin A", "Vitamin C", "Vitamin D", "Vitamin K"],
+          correctAnswer: 2
+        }
+      ];
+      
+      state.quizQuestions = questions;
+      state.currentQuestion = 0;
+      state.score = 0;
+      
+      renderQuizQuestion();
+    }
+
+    // Render current quiz question
+    function renderQuizQuestion() {
+      if (state.currentQuestion >= state.quizQuestions.length) {
+        showQuizResults();
+        return;
+      }
+      
+      const question = state.quizQuestions[state.currentQuestion];
+      
+      const html = `
+        <div class="quiz-question">
+          <h4 class="text-lg font-semibold mb-4">Question ${state.currentQuestion + 1}: ${question.question}</h4>
+          <div class="space-y-3">
+            ${question.options.map((option, index) => `
+              <button 
+                onclick="selectAnswer(${index})"
+                class="w-full text-left p-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors ${state.selectedAnswer === index ? 'bg-blue-50 border-blue-300' : ''}"
+              >
+                ${option}
+              </button>
+            `).join('')}
+          </div>
+          <button 
+            onclick="submitAnswer()"
+            class="mt-6 w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-medium transition-colors ${state.selectedAnswer === null ? 'opacity-50 cursor-not-allowed' : ''}"
+            ${state.selectedAnswer === null ? 'disabled' : ''}
+          >
+            Submit Answer
+          </button>
+        </div>
+      `;
+      
+      elements.quizContent.innerHTML = html;
+      state.selectedAnswer = null;
+    }
+
+    // Select answer
+    function selectAnswer(index) {
+      state.selectedAnswer = index;
+      renderQuizQuestion(); // Re-render to show selected state
+    }
+
+    // Submit answer
+    function submitAnswer() {
+      if (state.selectedAnswer === null) return;
+      
+      const question = state.quizQuestions[state.currentQuestion];
+      if (state.selectedAnswer === question.correctAnswer) {
+        state.score++;
+      }
+      
+      state.currentQuestion++;
+      renderQuizQuestion();
+    }
+
+    // Show quiz results
+    function showQuizResults() {
+      const html = `
+        <div class="quiz-results text-center">
+          <div class="mb-6">
+            <i data-lucide="award" class="w-12 h-12 mx-auto text-yellow-500 mb-4"></i>
+            <h3 class="text-xl font-bold mb-2">Quiz Completed!</h3>
+            <p class="text-gray-600">You scored ${state.score} out of ${state.quizQuestions.length}</p>
+          </div>
+          <button 
+            onclick="closeQuizModal()"
+            class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-medium transition-colors"
+          >
+            Close
+          </button>
+        </div>
+      `;
+      
+      elements.quizContent.innerHTML = html;
+      lucide.createIcons();
+    }
+
     // Render mindfulness leaderboard
     async function renderMindfulnessLeaderboard() {
       try {
@@ -467,7 +674,7 @@
         }
         
         const html = `
-          <div class="space-y-6 slide-in">
+          <div class="space-y-6">
             <div class="flex space-x-1 bg-slate-100 p-1 rounded-lg">
               <button
                 onclick="state.activeMindfulnessTab = 'breathing'; renderMindfulnessLeaderboard();"
@@ -477,8 +684,8 @@
                     : 'text-slate-600 hover:text-slate-900'
                 }"
               >
-                <i data-lucide="brain" class="w-4 h-4 inline mr-2"></i>
-                Breathing Level
+                <i data-lucide="brain" class="w-4 h-4 inline mr-2 tab-icon"></i>
+                <span onclick="showTermsModal()" class="cursor-help hover:underline">Breathing Level</span>
               </button>
               <button
                 onclick="state.activeMindfulnessTab = 'meditation'; renderMindfulnessLeaderboard();"
@@ -488,8 +695,8 @@
                     : 'text-slate-600 hover:text-slate-900'
                 }"
               >
-                <i data-lucide="moon" class="w-4 h-4 inline mr-2"></i>
-                Meditation
+                <i data-lucide="moon" class="w-4 h-4 inline mr-2 tab-icon"></i>
+                <span onclick="showTermsModal()" class="cursor-help hover:underline">Meditation</span>
               </button>
               <button
                 onclick="state.activeMindfulnessTab = 'focus'; renderMindfulnessLeaderboard();"
@@ -499,8 +706,8 @@
                     : 'text-slate-600 hover:text-slate-900'
                 }"
               >
-                <i data-lucide="target" class="w-4 h-4 inline mr-2"></i>
-                Focus Sessions
+                <i data-lucide="target" class="w-4 h-4 inline mr-2 tab-icon"></i>
+                <span onclick="showTermsModal()" class="cursor-help hover:underline">Focus Sessions</span>
               </button>
             </div>
 
@@ -508,13 +715,13 @@
               <div class="p-6 border-b border-gray-200">
                 <div class="flex items-center space-x-3">
                   <i data-lucide="brain" class="w-6 h-6 text-blue-600"></i>
-                  <h3 class="text-xl font-semibold text-gray-900 font-playfair">Top Mindfulness Practitioners</h3>
+                  <h3 class="text-xl font-semibold text-gray-900 font-playfair">🧘‍♀️ Monk-ness LeaderBoard</h3>
                 </div>
               </div>
               
               <div class="divide-y divide-gray-200">
                 ${currentData.map((user, index) => `
-                  <div class="flex items-center justify-between p-4 ${getRankBg(index + 1)} slide-in delay-${index % 4}">
+                  <div class="flex items-center justify-between p-4 ${getRankBg(index + 1)}">
                     <div class="flex items-center space-x-4">
                       ${getRankIcon(index + 1)}
                       <img 
@@ -654,7 +861,7 @@
         }
 
         const html = `
-          <div class="space-y-6 slide-in">
+          <div class="space-y-6">
             <div class="flex space-x-1 bg-slate-100 p-1 rounded-lg">
               <button
                 onclick="state.activeNutritionTab = 'correct'; renderNutritionLeaderboard();"
@@ -664,7 +871,7 @@
                     : 'text-slate-600 hover:text-slate-900'
                 }"
               >
-                <i data-lucide="check-circle" class="w-4 h-4 inline mr-1"></i>
+                <i data-lucide="check-circle" class="w-4 h-4 inline mr-1 tab-icon"></i>
                 <span class="tab-text">Most Correct</span>
               </button>
               <button
@@ -675,7 +882,7 @@
                     : 'text-slate-600 hover:text-slate-900'
                 }"
               >
-                <i data-lucide="x-circle" class="w-4 h-4 inline mr-1"></i>
+                <i data-lucide="x-circle" class="w-4 h-4 inline mr-1 tab-icon"></i>
                 <span class="tab-text">Most Wrong</span>
               </button>
               <button
@@ -686,7 +893,7 @@
                     : 'text-slate-600 hover:text-slate-900'
                 }"
               >
-                <i data-lucide="users" class="w-4 h-4 inline mr-1"></i>
+                <i data-lucide="users" class="w-4 h-4 inline mr-1 tab-icon"></i>
                 <span class="tab-text">Most Active</span>
               </button>
             </div>
@@ -695,11 +902,11 @@
               <div class="p-6 border-b border-gray-200 flex items-center justify-between">
                 <div class="flex items-center space-x-3">
                   ${icon}
-                  <h3 class="text-xl font-semibold text-gray-900 font-playfair">${title}</h3>
+                  <h3 class="text-xl font-semibold text-gray-900 font-playfair">🥗 Nutri Board - ${title}</h3>
                 </div>
                 <button
-                  onclick="startQuiz()"
-                  class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center space-x-2 pulse-hover"
+                  onclick="showQuizModal()"
+                  class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center space-x-2"
                 >
                   <i data-lucide="play" class="w-4 h-4"></i>
                   <span>Take Quiz</span>
@@ -708,7 +915,7 @@
               
               <div class="divide-y divide-gray-200">
                 ${currentData.map((user, index) => `
-                  <div class="flex items-center justify-between p-4 ${getRankBg(index + 1)} slide-in delay-${index % 4}">
+                  <div class="flex items-center justify-between p-4 ${getRankBg(index + 1)}">
                     <div class="flex items-center space-x-4">
                       ${getRankIcon(index + 1)}
                       <img 
@@ -763,6 +970,12 @@
 
     // Make functions available globally
     window.startQuiz = startQuiz;
+    window.showQuizModal = showQuizModal;
+    window.closeQuizModal = closeQuizModal;
+    window.selectAnswer = selectAnswer;
+    window.submitAnswer = submitAnswer;
+    window.showTermsModal = showTermsModal;
+    window.closeModal = closeModal;
     window.state = state;
   </script>
 </body>
